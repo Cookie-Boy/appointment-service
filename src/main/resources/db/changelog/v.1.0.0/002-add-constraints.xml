@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.6.xsd">
+
+    <!-- Внешние ключи для appointments -->
+    <changeSet id="005-add-appointments-fk" author="cool_developer">
+        <addForeignKeyConstraint
+                baseTableName="appointments"
+                baseColumnNames="clinic_id"
+                referencedTableName="clinics"
+                referencedColumnNames="id"
+                constraintName="fk_appointments_clinics"/>
+
+        <addForeignKeyConstraint
+                baseTableName="appointments"
+                baseColumnNames="doctor_id"
+                referencedTableName="doctors"
+                referencedColumnNames="id"
+                constraintName="fk_appointments_doctors"/>
+
+        <addForeignKeyConstraint
+                baseTableName="appointments"
+                baseColumnNames="patient_id"
+                referencedTableName="patients"
+                referencedColumnNames="id"
+                constraintName="fk_appointments_patients"/>
+    </changeSet>
+
+    <!-- Ограничение для статуса -->
+    <changeSet id="006-add-status-check" author="cool_developer">
+        <sql>
+            ALTER TABLE appointments
+            ADD CONSTRAINT ck_appointments_status
+            CHECK (status IN ('CONFIRMED', 'PENDING', 'CANCELLED'));
+        </sql>
+    </changeSet>
+
+    <!-- Индексы -->
+    <changeSet id="007-add-indexes" author="cool_developer">
+        <createIndex
+                tableName="appointments"
+                indexName="idx_appointments_clinic_id"
+                unique="false">
+            <column name="clinic_id"/>
+        </createIndex>
+
+        <createIndex
+                tableName="appointments"
+                indexName="idx_appointments_doctor_id"
+                unique="false">
+            <column name="doctor_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

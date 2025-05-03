@@ -12,7 +12,6 @@ import ru.sibsutis.appointment.core.service.TelegramWebhookBotService;
 
 @Configuration
 public class BotConfig {
-
     @Bean
     public TelegramBotsWebhookApplication telegramBotsApi(TelegramWebhookBotService botService) throws TelegramApiException {
         TelegramBotsWebhookApplication webhookApplication =
