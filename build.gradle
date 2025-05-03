@@ -1,0 +1,54 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.4.5'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'ru.sibsutis'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation('org.springframework.boot:spring-boot-starter-web') {
+		exclude group: 'org.eclipse.jetty'
+	}
+
+	implementation 'io.javalin:javalin:6.6.0'
+	implementation 'org.eclipse.jetty:jetty-server:11.0.25'
+	implementation 'org.eclipse.jetty:jetty-servlet:11.0.25'
+	implementation 'org.eclipse.jetty:jetty-http:11.0.25'
+	implementation 'org.eclipse.jetty:jetty-io:11.0.25'
+	implementation 'org.eclipse.jetty:jetty-util:11.0.25'
+	implementation 'org.eclipse.jetty:jetty-security:11.0.25'
+//	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+//	implementation 'org.springframework.boot:spring-boot-starter-security'
+//	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+//	implementation 'org.liquibase:liquibase-core'
+//	implementation 'org.postgresql:postgresql'
+	implementation 'org.telegram:telegrambots-webhook:8.3.0'
+	implementation 'org.telegram:telegrambots-meta:8.3.0'
+	implementation 'org.telegram:telegrambots-client:8.3.0'
+	implementation group: 'org.mapstruct', name: 'mapstruct', version: '1.6.3'
+
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	annotationProcessor group: 'org.mapstruct', name: 'mapstruct-processor', version: '1.6.3'
+	annotationProcessor group: 'org.projectlombok', name: 'lombok-mapstruct-binding', version: '0.2.0'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
