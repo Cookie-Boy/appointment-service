@@ -47,7 +47,7 @@ public class AppointmentService {
         LocalDate date = dto.startTime().toLocalDate();
         String slotTime = formatTimeSlot(dto.startTime(), dto.endTime());
 
-        String slotKey = "slots:%s:%s".formatted(
+        String slotKey = "slots:doctor:%s:date:%s".formatted(
                 doctor.getId(),
                 date
         );
@@ -59,7 +59,7 @@ public class AppointmentService {
         );
 
         if (Boolean.FALSE.equals(isSlotFree)) {
-            throw new SlotAlreadyBookedException("Slot is already booked");
+            throw new SlotAlreadyBookedException("На это время уже забронировано!");
         }
 
         try {
@@ -67,7 +67,7 @@ public class AppointmentService {
             appointment.setClinic(clinic);
             appointment.setDoctor(doctor);
             appointment.setPatient(patient);
-            appointment.setStatus(AppointmentStatus.PENDING);
+            appointment.setStatus(AppointmentStatus.CONFIRMED);
 
             appointment = appointmentRepository.save(appointment);
 
@@ -84,7 +84,7 @@ public class AppointmentService {
 
         } catch (Exception e) {
             redisTemplate.opsForHash().delete(slotKey, slotTime);
-            throw new BookingException("Booking failed: " + e.getMessage());
+            throw new BookingException("Ошибка бронирования: " + e.getMessage());
         }
     }
 
