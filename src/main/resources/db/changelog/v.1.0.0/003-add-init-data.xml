@@ -28,13 +28,17 @@
             <column name="clinic_id" value="123e4567-e89b-12d3-a456-426614174000" type="uuid"/>
             <column name="first_name" value="Евгений"/>
             <column name="last_name" value="Власов"/>
+            <column name="start_time" value="10:00:00"/>
+            <column name="end_time" value="20:00:00"/>
             <column name="specialization" value="Стоматолог"/>
         </insert>
         <insert tableName="doctors">
             <column name="id" value="556f7890-f12b-34c5-d678-901234567890" type="uuid"/>
-            <column name="clinic_id" value="223e4567-e89b-12d3-a456-426614174000" type="uuid"/>
+            <column name="clinic_id" value="123e4567-e89b-12d3-a456-426614174000" type="uuid"/>
             <column name="first_name" value="Мария"/>
             <column name="last_name" value="Сидорова"/>
+            <column name="start_time" value="08:00:00"/>
+            <column name="end_time" value="22:00:00"/>
             <column name="specialization" value="Терапевт"/>
         </insert>
     </changeSet>
@@ -55,28 +59,28 @@
         </insert>
     </changeSet>
 
-    <!-- Тестовые записи -->
-    <changeSet id="012-insert-appointments" author="cool_developer">
-        <insert tableName="appointments">
-            <column name="id" value="550e8400-e29b-41d4-a716-446655440000" type="uuid"/>
-            <column name="clinic_id" value="123e4567-e89b-12d3-a456-426614174000" type="uuid"/>
-            <column name="doctor_id" value="456f7890-f12b-34c5-d678-901234567890" type="uuid"/>
-            <column name="patient_id" value="994b5ff3-2391-40e5-a7f3-02c9a006a3b3" type="uuid"/>
-            <column name="start_time" value="2025-05-10T14:30:00Z"/>
-            <column name="end_time" value="2025-05-10T15:00:00Z"/>
-            <column name="status" value="CONFIRMED"/>
-            <column name="metadata" value='{"service_type": "Консультация", "notes": "Пациент просит предварительно сделать рентген"}'/>
-        </insert>
-        <insert tableName="appointments">
-            <column name="id" value="660e8400-e29b-41d4-a716-446655440000" type="uuid"/>
-            <column name="clinic_id" value="223e4567-e89b-12d3-a456-426614174000" type="uuid"/>
-            <column name="doctor_id" value="556f7890-f12b-34c5-d678-901234567890" type="uuid"/>
-            <column name="patient_id" value="2ee9e458-1b7d-4e79-b5c0-843a7eacf59a" type="uuid"/>
-            <column name="start_time" value="2025-05-11T10:00:00Z"/>
-            <column name="end_time" value="2025-05-11T10:30:00Z"/>
-            <column name="status" value="PENDING"/>
-            <column name="metadata" value='{"service_type": "Общий осмотр"}'/>
-        </insert>
-    </changeSet>
+<!--    &lt;!&ndash; Тестовые записи &ndash;&gt;-->
+<!--    <changeSet id="012-insert-appointments" author="cool_developer">-->
+<!--        <insert tableName="appointments">-->
+<!--            <column name="id" value="550e8400-e29b-41d4-a716-446655440000" type="uuid"/>-->
+<!--            <column name="clinic_id" value="123e4567-e89b-12d3-a456-426614174000" type="uuid"/>-->
+<!--            <column name="doctor_id" value="456f7890-f12b-34c5-d678-901234567890" type="uuid"/>-->
+<!--            <column name="patient_id" value="994b5ff3-2391-40e5-a7f3-02c9a006a3b3" type="uuid"/>-->
+<!--            <column name="start_time" value="2025-05-10T14:30:00Z"/>-->
+<!--            <column name="end_time" value="2025-05-10T15:00:00Z"/>-->
+<!--            <column name="status" value="CONFIRMED"/>-->
+<!--            <column name="metadata" value='{"service_type": "Консультация", "notes": "Пациент просит предварительно сделать рентген"}'/>-->
+<!--        </insert>-->
+<!--        <insert tableName="appointments">-->
+<!--            <column name="id" value="660e8400-e29b-41d4-a716-446655440000" type="uuid"/>-->
+<!--            <column name="clinic_id" value="223e4567-e89b-12d3-a456-426614174000" type="uuid"/>-->
+<!--            <column name="doctor_id" value="556f7890-f12b-34c5-d678-901234567890" type="uuid"/>-->
+<!--            <column name="patient_id" value="2ee9e458-1b7d-4e79-b5c0-843a7eacf59a" type="uuid"/>-->
+<!--            <column name="start_time" value="2025-05-11T10:00:00Z"/>-->
+<!--            <column name="end_time" value="2025-05-11T10:30:00Z"/>-->
+<!--            <column name="status" value="PENDING"/>-->
+<!--            <column name="metadata" value='{"service_type": "Общий осмотр"}'/>-->
+<!--        </insert>-->
+<!--    </changeSet>-->
 
 </databaseChangeLog>

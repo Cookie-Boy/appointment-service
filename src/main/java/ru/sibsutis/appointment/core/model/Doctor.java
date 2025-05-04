@@ -2,6 +2,8 @@ package ru.sibsutis.appointment.core.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalTime;
 import java.util.UUID;
 
 @Entity
@@ -26,6 +28,12 @@ public class Doctor {
 
     @Column(nullable = false, length = 100)
     private String lastName;
+
+    @Column(nullable = false)
+    private LocalTime startTime;
+
+    @Column(nullable = false)
+    private LocalTime endTime;
 
     @Column(length = 200)
     private String specialization;

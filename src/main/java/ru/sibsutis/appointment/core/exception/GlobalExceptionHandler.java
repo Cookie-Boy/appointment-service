@@ -12,7 +12,7 @@ import ru.sibsutis.appointment.api.dto.ErrorResponseDto;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ErrorResponseDto> handlePetNotFoundException(EntityNotFoundException ex) {
+    public ResponseEntity<ErrorResponseDto> handleEntityNotFoundException(EntityNotFoundException ex) {
         ErrorResponseDto errorResponse = new ErrorResponseDto(404, ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }

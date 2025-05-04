@@ -34,6 +34,12 @@
             <column name="last_name" type="varchar(100)">
                 <constraints nullable="false"/>
             </column>
+            <column name="start_time" type="time">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_time" type="time">
+                <constraints nullable="false"/>
+            </column>
             <column name="specialization" type="varchar(200)"/>
         </createTable>
     </changeSet>
