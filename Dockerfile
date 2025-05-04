@@ -1,9 +1,7 @@
-FROM eclipse-temurin:21-jdk as builder
+FROM eclipse-temurin:21-jdk
 
 WORKDIR /app
-
-# Копируем исходники и Gradle-файлы
 COPY . .
-
-# Устанавливаем кеш для Gradle (опционально)
-RUN --mount=type=cache,target=/root/.gradle ./gradlew clean build -x check -x test
+RUN ./gradlew clean build -x check -x test
+COPY build/libs/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
