@@ -75,6 +75,7 @@
             <column name="end_time" type="timestamp with time zone">
                 <constraints nullable="false"/>
             </column>
+            <column name="telegram_user_id" type="uuid" />
             <column name="status" type="varchar(20)">
                 <constraints nullable="false"/>
             </column>
@@ -85,6 +86,21 @@
                 <constraints nullable="false"/>
             </column>
             <column name="metadata" type="jsonb"/>
+        </createTable>
+    </changeSet>
+
+    <!-- Таблица пациентов -->
+    <changeSet id="005-create-telegram-users-table" author="cool_developer">
+        <createTable tableName="telegram_users">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="chat_id" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
     </changeSet>
 

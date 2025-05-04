@@ -6,7 +6,12 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.6.xsd">
 
     <!-- Внешние ключи для appointments -->
-    <changeSet id="005-add-appointments-fk" author="cool_developer">
+    <changeSet id="006-add-appointments-fk" author="cool_developer">
+        <addUniqueConstraint
+                tableName="telegram_users"
+                columnNames="chat_id"
+                constraintName="uk_telegram_users_chat_id"/>
+
         <addForeignKeyConstraint
                 baseTableName="appointments"
                 baseColumnNames="clinic_id"
@@ -27,10 +32,17 @@
                 referencedTableName="patients"
                 referencedColumnNames="id"
                 constraintName="fk_appointments_patients"/>
+
+        <addForeignKeyConstraint
+                baseTableName="appointments"
+                baseColumnNames="telegram_user_id"
+                referencedTableName="telegram_users"
+                referencedColumnNames="id"
+                constraintName="fk_appointments_telegram_users"/>
     </changeSet>
 
     <!-- Ограничение для статуса -->
-    <changeSet id="006-add-status-check" author="cool_developer">
+    <changeSet id="007-add-status-check" author="cool_developer">
         <sql>
             ALTER TABLE appointments
             ADD CONSTRAINT ck_appointments_status
@@ -39,7 +51,7 @@
     </changeSet>
 
     <!-- Индексы -->
-    <changeSet id="007-add-indexes" author="cool_developer">
+    <changeSet id="008-add-indexes" author="cool_developer">
         <createIndex
                 tableName="appointments"
                 indexName="idx_appointments_clinic_id"

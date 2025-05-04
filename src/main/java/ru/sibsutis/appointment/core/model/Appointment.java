@@ -24,6 +24,7 @@ public class Appointment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(columnDefinition = "uuid")
     private UUID id;
 
     @ManyToOne
@@ -47,6 +48,10 @@ public class Appointment {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AppointmentStatus status;
+
+    @ManyToOne
+    @JoinColumn(name = "telegram_user_id")
+    private TelegramUser telegramUser;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

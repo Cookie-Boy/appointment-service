@@ -8,6 +8,7 @@ public record AppointmentRequestDto(
         UUID clinicId,
         UUID doctorId,
         UUID patientId,
+        String telegramUsername,
         LocalDateTime startTime,
         LocalDateTime endTime,
         Map<String, Object> metadata

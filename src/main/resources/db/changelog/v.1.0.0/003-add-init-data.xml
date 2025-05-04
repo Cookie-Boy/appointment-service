@@ -6,7 +6,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.6.xsd">
 
     <!-- Тестовые клиники -->
-    <changeSet id="008-insert-clinics" author="cool_developer">
+    <changeSet id="009-insert-clinics" author="cool_developer">
         <insert tableName="clinics">
             <column name="id" value="123e4567-e89b-12d3-a456-426614174000" type="uuid"/>
             <column name="name" value="Стоматология 'Улыбка'"/>
@@ -22,12 +22,12 @@
     </changeSet>
 
     <!-- Тестовые доктора -->
-    <changeSet id="009-insert-doctors" author="cool_developer">
+    <changeSet id="010-insert-doctors" author="cool_developer">
         <insert tableName="doctors">
             <column name="id" value="456f7890-f12b-34c5-d678-901234567890" type="uuid"/>
             <column name="clinic_id" value="123e4567-e89b-12d3-a456-426614174000" type="uuid"/>
-            <column name="first_name" value="Иван"/>
-            <column name="last_name" value="Петров"/>
+            <column name="first_name" value="Евгений"/>
+            <column name="last_name" value="Власов"/>
             <column name="specialization" value="Стоматолог"/>
         </insert>
         <insert tableName="doctors">
@@ -40,7 +40,7 @@
     </changeSet>
 
     <!-- Тестовые пациенты -->
-    <changeSet id="010-insert-patients" author="cool_developer">
+    <changeSet id="011-insert-patients" author="cool_developer">
         <insert tableName="patients">
             <column name="id" value="994b5ff3-2391-40e5-a7f3-02c9a006a3b3" type="uuid"/>
             <column name="first_name" value="Алексей"/>
@@ -56,7 +56,7 @@
     </changeSet>
 
     <!-- Тестовые записи -->
-    <changeSet id="011-insert-appointments" author="cool_developer">
+    <changeSet id="012-insert-appointments" author="cool_developer">
         <insert tableName="appointments">
             <column name="id" value="550e8400-e29b-41d4-a716-446655440000" type="uuid"/>
             <column name="clinic_id" value="123e4567-e89b-12d3-a456-426614174000" type="uuid"/>

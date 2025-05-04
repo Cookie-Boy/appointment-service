@@ -7,18 +7,17 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import ru.sibsutis.appointment.api.dto.AppointmentRequestDto;
 import ru.sibsutis.appointment.api.dto.AppointmentResponseDto;
+import ru.sibsutis.appointment.api.dto.SuccessResponseDto;
 import ru.sibsutis.appointment.api.mapper.AppointmentMapper;
 import ru.sibsutis.appointment.core.exception.BookingException;
 import ru.sibsutis.appointment.core.exception.SlotAlreadyBookedException;
 import ru.sibsutis.appointment.core.model.*;
-import ru.sibsutis.appointment.core.repository.AppointmentRepository;
-import ru.sibsutis.appointment.core.repository.ClinicRepository;
-import ru.sibsutis.appointment.core.repository.DoctorRepository;
-import ru.sibsutis.appointment.core.repository.PatientRepository;
+import ru.sibsutis.appointment.core.repository.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +27,7 @@ public class AppointmentService {
     private final ClinicRepository clinicRepository;
     private final DoctorRepository doctorRepository;
     private final PatientRepository patientRepository;
+    private final TelegramUserRepository telegramUserRepository;
 
     private final AppointmentMapper appointmentMapper;
 
@@ -43,6 +43,8 @@ public class AppointmentService {
 
         Patient patient = patientRepository.findById(dto.patientId())
                 .orElseThrow(() -> new EntityNotFoundException("Patient not found"));
+
+        TelegramUser telegramUser = telegramUserRepository.findByUsername(dto.telegramUsername());
 
         LocalDate date = dto.startTime().toLocalDate();
         String slotTime = formatTimeSlot(dto.startTime(), dto.endTime());
@@ -67,7 +69,8 @@ public class AppointmentService {
             appointment.setClinic(clinic);
             appointment.setDoctor(doctor);
             appointment.setPatient(patient);
-            appointment.setStatus(AppointmentStatus.CONFIRMED);
+            appointment.setTelegramUser(telegramUser);
+            appointment.setStatus(AppointmentStatus.PENDING);
 
             appointment = appointmentRepository.save(appointment);
 
@@ -86,6 +89,21 @@ public class AppointmentService {
             redisTemplate.opsForHash().delete(slotKey, slotTime);
             throw new BookingException("Ошибка бронирования: " + e.getMessage());
         }
+    }
+
+    @Transactional
+    public SuccessResponseDto cancelAppointment(UUID id) {
+        Appointment app = appointmentRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Бронь не найдена"));
+
+        app.setStatus(AppointmentStatus.CANCELLED);
+        appointmentRepository.save(app);
+        redisTemplate.opsForHash().delete(
+                "slots:doctor:" + app.getDoctor().getId() + ":date:" + app.getStartTime().toLocalDate(),
+                formatTimeSlot(app.getStartTime(), app.getEndTime())
+        );
+
+        return new SuccessResponseDto(200, "Бронь успешно отменена");
     }
 
     private String formatTimeSlot(LocalDateTime start, LocalDateTime end) {
