@@ -120,6 +120,8 @@ public class AppointmentService {
         Appointment app = appointmentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Бронь не найдена"));
 
+        log.info("App startTime: {}, endTime: {}", app.getStartTime(), app.getEndTime());
+
         app.setStatus(AppointmentStatus.CANCELLED);
         appointmentRepository.save(app);
 
@@ -131,6 +133,15 @@ public class AppointmentService {
         redisTemplate.opsForZSet().incrementScore(loadKey, "total", -1);
 
         return new SuccessResponseDto(200, "Бронь успешно отменена");
+    }
+
+    public List<AppointmentResponseDto> getAllAppointments(UUID patientId) {
+        List<Appointment> appointments = appointmentRepository.findByPatientId(patientId);
+        return appointmentMapper.toDto(appointments);
+    }
+
+    public List<Appointment> getAllAppointments(TelegramUser telegramUser) {
+        return appointmentRepository.findByTelegramUser(telegramUser);
     }
 
     public Doctor findOptimalDoctor(UUID clinicId) {
@@ -158,16 +169,17 @@ public class AppointmentService {
                 String status = (String) redisTemplate.opsForHash().get(slotKey, slotTime);
 
                 if (status == null) {
-                    LocalDateTime slotDateTime = tempTime.atDate(date.toLocalDate());
+                    return tempTime.atDate(date.toLocalDate());
+//                    LocalDateTime slotDateTime = tempTime.atDate(date.toLocalDate());
 
-                    boolean isSlotFreeInDb = appointmentRepository.findByStartTime(slotDateTime).isEmpty();
+//                    boolean isSlotFreeInDb = appointmentRepository.findByStartTime(slotDateTime).isEmpty();
 
-                    if (isSlotFreeInDb) {
-                        return slotDateTime;
-                    } else {
-                        // Обновляем Redis, если данные устарели
-                        redisTemplate.opsForHash().put(slotKey, slotTime, "locked");
-                    }
+//                    if (isSlotFreeInDb) {
+//                        return slotDateTime;
+//                    } else {
+//                         Обновляем Redis, если данные устарели
+//                        redisTemplate.opsForHash().put(slotKey, slotTime, "locked");
+//                    }
                 }
                 tempTime = tempTime.plusMinutes(30);
             }

@@ -6,6 +6,8 @@ import ru.sibsutis.appointment.api.dto.AppointmentRequestDto;
 import ru.sibsutis.appointment.api.dto.AppointmentResponseDto;
 import ru.sibsutis.appointment.core.model.Appointment;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface AppointmentMapper {
     Appointment toEntity(AppointmentRequestDto dto);
@@ -23,4 +25,6 @@ public interface AppointmentMapper {
             target = "patientFullName"
     )
     AppointmentResponseDto toDto(Appointment appointment);
+
+    List<AppointmentResponseDto> toDto(List<Appointment> appointments);
 }
