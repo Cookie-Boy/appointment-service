@@ -1,18 +1,23 @@
-FROM eclipse-temurin:21-jdk
+FROM eclipse-temurin:21-jdk as builder
 
 WORKDIR /app
 
-# Копируем файлы с сохранением прав
-COPY --chmod=755 gradlew .
-COPY . .
+# 1. Копируем только необходимые для сборки файлы
+COPY gradlew .
+COPY gradle gradle
+COPY build.gradle .
+COPY settings.gradle .
+COPY src src
 
-# Даем права на выполнение (если предыдущий шаг не сработал)
-RUN chmod +x gradlew
+# 2. Даем права и запускаем сборку
+RUN chmod +x gradlew && ./gradlew clean build -x test
 
-# Запускаем сборку
-RUN ./gradlew clean build -x check -x test
+# 3. Финальный образ
+FROM eclipse-temurin:21-jre
+WORKDIR /app
 
-# Копируем результат
-COPY build/libs/*.jar app.jar
+# 4. Копируем только результат сборки
+COPY --from=builder /app/build/libs/*.jar app.jar
 
+# 5. Запуск
 ENTRYPOINT ["java", "-jar", "app.jar"]
