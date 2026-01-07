@@ -12,7 +12,6 @@ public class DataConfig {
     public RedisTemplate<?, ?> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<?, ?> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
-
         return template;
     }
 

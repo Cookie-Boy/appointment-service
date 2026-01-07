@@ -30,7 +30,6 @@ public class AppointmentService {
     private final ClinicRepository clinicRepository;
     private final DoctorRepository doctorRepository;
     private final PatientRepository patientRepository;
-    private final TelegramUserRepository telegramUserRepository;
 
     private final AppointmentMapper appointmentMapper;
 
@@ -65,8 +64,6 @@ public class AppointmentService {
         Patient patient = patientRepository.findById(dto.patientId())
                 .orElseThrow(() -> new EntityNotFoundException("Patient not found"));
 
-        TelegramUser telegramUser = telegramUserRepository.findByUsername(dto.telegramUsername());
-
         LocalDate date = startTime.toLocalDate();
         String preferredTime = formatTimeSlot(startTime, endTime);
 
@@ -91,7 +88,6 @@ public class AppointmentService {
             appointment.setClinic(clinic);
             appointment.setDoctor(doctor);
             appointment.setPatient(patient);
-            appointment.setTelegramUser(telegramUser);
             appointment.setStartTime(startTime);
             appointment.setEndTime(endTime);
             appointment.setStatus(AppointmentStatus.PENDING);
@@ -135,16 +131,17 @@ public class AppointmentService {
         return new SuccessResponseDto(200, "Бронь успешно отменена");
     }
 
-    public List<AppointmentResponseDto> getAllAppointments(UUID patientId) {
+    public List<AppointmentResponseDto> getPatientAppointments(UUID patientId) {
         List<Appointment> appointments = appointmentRepository.findByPatientId(patientId);
         return appointmentMapper.toDto(appointments);
     }
 
-    public List<Appointment> getAllAppointments(TelegramUser telegramUser) {
-        return appointmentRepository.findByTelegramUser(telegramUser);
+    public List<AppointmentResponseDto> getTgUserAppointments(UUID tgUserId) {
+        List<Appointment> appointments = appointmentRepository.findByTelegramUserId(tgUserId);
+        return appointmentMapper.toDto(appointments);
     }
 
-    public Doctor findOptimalDoctor(UUID clinicId) {
+    private Doctor findOptimalDoctor(UUID clinicId) {
         List<Doctor> doctors = doctorRepository.findAllByClinicId(clinicId);
 
         return doctors.stream()
@@ -156,7 +153,7 @@ public class AppointmentService {
                 .orElseThrow(() -> new EntityNotFoundException("Нет доступных врачей"));
     }
 
-    public LocalDateTime findNearestAvailableSlot(Doctor doctor) {
+    private LocalDateTime findNearestAvailableSlot(Doctor doctor) {
         LocalDateTime now = LocalDateTime.now();
         for (int i = 0; i < 14; i++) {
             LocalDateTime date = adjustDateTime(now.plusDays(i), doctor, i == 0);
