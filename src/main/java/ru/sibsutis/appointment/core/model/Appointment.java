@@ -49,9 +49,7 @@ public class Appointment {
     @Column(nullable = false)
     private AppointmentStatus status;
 
-    @ManyToOne
-    @JoinColumn(name = "telegram_user_id")
-    private TelegramUser telegramUser;
+    private String tgUserName;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

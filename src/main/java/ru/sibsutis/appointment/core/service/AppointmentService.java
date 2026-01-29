@@ -90,6 +90,7 @@ public class AppointmentService {
             appointment.setPatient(patient);
             appointment.setStartTime(startTime);
             appointment.setEndTime(endTime);
+            appointment.setTgUserName(dto.tgUserName());
             appointment.setStatus(AppointmentStatus.PENDING);
 
             appointment = appointmentRepository.save(appointment);
@@ -136,8 +137,8 @@ public class AppointmentService {
         return appointmentMapper.toDto(appointments);
     }
 
-    public List<AppointmentResponseDto> getTgUserAppointments(UUID tgUserId) {
-        List<Appointment> appointments = appointmentRepository.findByTelegramUserId(tgUserId);
+    public List<AppointmentResponseDto> getTgUserAppointments(String tgUserName) {
+        List<Appointment> appointments = appointmentRepository.findByTgUserName(tgUserName);
         return appointmentMapper.toDto(appointments);
     }
 

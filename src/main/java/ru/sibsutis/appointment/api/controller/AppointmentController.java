@@ -15,29 +15,30 @@ import java.util.UUID;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/appointment")
 public class AppointmentController {
 
     private final AppointmentService appointmentService;
 
-    @PostMapping("/appointment")
+    @PostMapping
     public ResponseEntity<AppointmentResponseDto> createAppointment(@RequestBody AppointmentRequestDto dto) {
         AppointmentResponseDto response = appointmentService.bookAppointment(dto);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/appointment/{patientId}")
+    @GetMapping("/patient/{patientId}")
     public ResponseEntity<List<AppointmentResponseDto>> getPatientAppointments(@PathVariable UUID patientId) {
         List<AppointmentResponseDto> response = appointmentService.getPatientAppointments(patientId);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/appointment/{tgUserId}")
-    public ResponseEntity<List<AppointmentResponseDto>> getTgUserAppointments(@PathVariable UUID tgUserId) {
-        List<AppointmentResponseDto> response = appointmentService.getTgUserAppointments(tgUserId);
+    @GetMapping("/tgUser/{tgUserName}")
+    public ResponseEntity<List<AppointmentResponseDto>> getTgUserAppointments(@PathVariable String tgUserName) {
+        List<AppointmentResponseDto> response = appointmentService.getTgUserAppointments(tgUserName);
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/appointment/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<SuccessResponseDto> cancelAppointment(@PathVariable UUID id) {
         return ResponseEntity.ok(appointmentService.cancelAppointment(id));
     }

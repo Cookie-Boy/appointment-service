@@ -43,7 +43,7 @@ public class AppointmentScheduler {
                 .findByStartTimeBetween(targetTime.minusMinutes(3), targetTime.plusMinutes(3));
 
         for (Appointment app : appointments) {
-            if (app.getStatus() == AppointmentStatus.CONFIRMED || app.getTelegramUser() == null) return;
+            if (app.getStatus() == AppointmentStatus.CONFIRMED || app.getTgUserName() == null) return;
 
             String lockKey = "hourly_notification:" + app.getId();
 
@@ -57,13 +57,13 @@ public class AppointmentScheduler {
 
             try {
                 ResponseEntity<?> result = telegramServiceClient.sendNotification(
-                        app.getTelegramUser().getChatId(),
+                        app.getTgUserName(),
                         "До вашего приёма остался 1 час ⏳" +
                                 "\nВрач: " + app.getDoctor().getFirstName() + " " + app.getDoctor().getLastName() +
                                 "\nВремя: " + app.getStartTime().format(TIME_FORMATTER));
 
                 if (result.getStatusCode().is2xxSuccessful()) {
-                    log.info("Уведомление успешно отправлено для chatId: {}", app.getTelegramUser().getChatId());
+                    log.info("Уведомление успешно отправлено для chatId: {}", app.getTgUserName());
                 } else {
                     throw new RestClientException("Ошибка отправки уведомления. Статус: " + result.getStatusCode()
                             + "Тело ответа: " + result.getBody());
@@ -71,7 +71,7 @@ public class AppointmentScheduler {
 
             } catch (RestClientException e) {
                 log.error("Ошибка при отправке HTTP-запроса уведомления для chatId: {}",
-                        app.getTelegramUser().getChatId(), e);
+                        app.getTgUserName(), e);
             } catch (Exception e) {
                 log.error("Непредвиденная ошибка при отправке уведомления", e);
                 throw new NotificationException("Ошибка отправки уведомления: " + e);
@@ -91,9 +91,9 @@ public class AppointmentScheduler {
                 cleanRedisSlot(app);
                 log.info("Confirmed appointment: {}", app.getId());
 
-                if (app.getTelegramUser() != null) {
+                if (app.getTgUserName() != null) {
                     telegramServiceClient.sendNotification(
-                            app.getTelegramUser().getChatId(),
+                            app.getTgUserName(),
                             "Ваш прием уже начинается!" +
                                     "\nВрач: " + app.getDoctor().getFirstName() + " " + app.getDoctor().getLastName() +
                                     "\nВремя: " + app.getStartTime().format(TIME_FORMATTER)

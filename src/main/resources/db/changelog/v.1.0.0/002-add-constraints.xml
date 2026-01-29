@@ -7,10 +7,6 @@
 
     <!-- Внешние ключи для appointments -->
     <changeSet id="006-add-appointments-fk" author="cool_developer">
-        <addUniqueConstraint
-                tableName="telegram_users"
-                columnNames="chat_id"
-                constraintName="uk_telegram_users_chat_id"/>
 
         <addForeignKeyConstraint
                 baseTableName="appointments"
@@ -32,13 +28,6 @@
                 referencedTableName="patients"
                 referencedColumnNames="id"
                 constraintName="fk_appointments_patients"/>
-
-        <addForeignKeyConstraint
-                baseTableName="appointments"
-                baseColumnNames="telegram_user_id"
-                referencedTableName="telegram_users"
-                referencedColumnNames="id"
-                constraintName="fk_appointments_telegram_users"/>
     </changeSet>
 
     <!-- Ограничение для статуса -->
