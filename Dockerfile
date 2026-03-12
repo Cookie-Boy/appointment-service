@@ -19,5 +19,5 @@ WORKDIR /app
 # 4. Копируем только результат сборки
 COPY --from=builder /app/build/libs/*.jar app.jar
 
-# 5. Запуск
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# 5. Запуск с ограничением памяти
+ENTRYPOINT ["java", "-Xms256m", "-Xmx512m", "-jar", "app.jar"]

@@ -3,13 +3,15 @@ package ru.sibsutis.appointment.core.service.scheduler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
+import ru.sibsutis.appointment.api.client.TelegramServiceClient;
 import ru.sibsutis.appointment.core.exception.NotificationException;
 import ru.sibsutis.appointment.core.model.Appointment;
 import ru.sibsutis.appointment.core.model.AppointmentStatus;
 import ru.sibsutis.appointment.core.repository.AppointmentRepository;
-import ru.sibsutis.appointment.core.service.TelegramWebhookBotService;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -21,10 +23,11 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class AppointmentScheduler {
 
-    private final AppointmentRepository appointmentRepository;
-    private final TelegramWebhookBotService botService;
-    private final RedisTemplate<String, String> redisTemplate;
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
+
+    private final RedisTemplate<String, String> redisTemplate;
+    private final AppointmentRepository appointmentRepository;
+    private final TelegramServiceClient telegramServiceClient;
 
     @Scheduled(fixedRate = 60_000)
     public void checkUpcomingAppointments() {
@@ -39,26 +42,41 @@ public class AppointmentScheduler {
         List<Appointment> appointments = appointmentRepository
                 .findByStartTimeBetween(targetTime.minusMinutes(3), targetTime.plusMinutes(3));
 
-        appointments.forEach(app -> {
-            if (app.getStatus() == AppointmentStatus.CONFIRMED || app.getTelegramUser() == null) return;
+        for (Appointment app : appointments) {
+            if (app.getStatus() == AppointmentStatus.CONFIRMED || app.getTgUserName() == null) return;
 
             String lockKey = "hourly_notification:" + app.getId();
-            try {
-                Boolean acquired = redisTemplate.opsForValue()
-                        .setIfAbsent(lockKey, "sent", 55, TimeUnit.MINUTES);
 
-                if (Boolean.TRUE.equals(acquired)) {
-                    botService.sendNotification(
-                            app.getTelegramUser().getChatId(),
-                            "До вашего приёма остался 1 час ⏳" +
-                                    "\nВрач: " + app.getDoctor().getFirstName() + " " + app.getDoctor().getLastName() +
-                                    "\nВремя: " + app.getStartTime().format(TIME_FORMATTER));
-                }
-            } catch (Exception e) {
-                throw new NotificationException("Не удалось отправить уведомление:\n" + e);
+            Boolean acquired = redisTemplate.opsForValue()
+                    .setIfAbsent(lockKey, "sent", 55, TimeUnit.MINUTES);
+
+            if (Boolean.FALSE.equals(acquired)) {
+                log.warn("Уведомление уже было отправлено (lock существует) для appointmentId: {}", app.getId());
+                continue;
             }
-            log.info("Sent notification for appointment: {}", app.getId());
-        });
+
+            try {
+                ResponseEntity<?> result = telegramServiceClient.sendNotification(
+                        app.getTgUserName(),
+                        "До вашего приёма остался 1 час ⏳" +
+                                "\nВрач: " + app.getDoctor().getFirstName() + " " + app.getDoctor().getLastName() +
+                                "\nВремя: " + app.getStartTime().format(TIME_FORMATTER));
+
+                if (result.getStatusCode().is2xxSuccessful()) {
+                    log.info("Уведомление успешно отправлено для chatId: {}", app.getTgUserName());
+                } else {
+                    throw new RestClientException("Ошибка отправки уведомления. Статус: " + result.getStatusCode()
+                            + "Тело ответа: " + result.getBody());
+                }
+
+            } catch (RestClientException e) {
+                log.error("Ошибка при отправке HTTP-запроса уведомления для chatId: {}",
+                        app.getTgUserName(), e);
+            } catch (Exception e) {
+                log.error("Непредвиденная ошибка при отправке уведомления", e);
+                throw new NotificationException("Ошибка отправки уведомления: " + e);
+            }
+        }
     }
 
     private void checkAndConfirm(LocalDateTime now) {
@@ -73,9 +91,9 @@ public class AppointmentScheduler {
                 cleanRedisSlot(app);
                 log.info("Confirmed appointment: {}", app.getId());
 
-                if (app.getTelegramUser() != null) {
-                    botService.sendNotification(
-                            app.getTelegramUser().getChatId(),
+                if (app.getTgUserName() != null) {
+                    telegramServiceClient.sendNotification(
+                            app.getTgUserName(),
                             "Ваш прием уже начинается!" +
                                     "\nВрач: " + app.getDoctor().getFirstName() + " " + app.getDoctor().getLastName() +
                                     "\nВремя: " + app.getStartTime().format(TIME_FORMATTER)

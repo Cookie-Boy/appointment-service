@@ -26,9 +26,15 @@ public class AppointmentController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{patientId}")
-    public ResponseEntity<List<AppointmentResponseDto>> getAllAppointments(@PathVariable UUID patientId) {
-        List<AppointmentResponseDto> response = appointmentService.getAllAppointments(patientId);
+    @GetMapping("/patient/{patientId}")
+    public ResponseEntity<List<AppointmentResponseDto>> getPatientAppointments(@PathVariable UUID patientId) {
+        List<AppointmentResponseDto> response = appointmentService.getPatientAppointments(patientId);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/tgUser/{tgUserName}")
+    public ResponseEntity<List<AppointmentResponseDto>> getTgUserAppointments(@PathVariable String tgUserName) {
+        List<AppointmentResponseDto> response = appointmentService.getTgUserAppointments(tgUserName);
         return ResponseEntity.ok(response);
     }
 

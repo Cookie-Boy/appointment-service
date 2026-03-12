@@ -20,27 +20,39 @@
     </changeSet>
 
     <!-- Таблица докторов -->
-    <changeSet id="002-create-doctors-table" author="cool_developer">
+    <changeSet id="create-doctors-table" author="cool_developer">
         <createTable tableName="doctors">
-            <column name="id" type="uuid">
+            <column name="id" type="UUID">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="clinic_id" type="uuid">
                 <constraints nullable="false"/>
             </column>
-            <column name="first_name" type="varchar(100)">
+            <column name="first_name" type="VARCHAR(100)">
                 <constraints nullable="false"/>
             </column>
-            <column name="last_name" type="varchar(100)">
+            <column name="last_name" type="VARCHAR(100)">
                 <constraints nullable="false"/>
             </column>
-            <column name="start_time" type="time">
+            <column name="middle_name" type="VARCHAR(100)"/>
+            <column name="specialization" type="VARCHAR(255)"/>
+            <column name="license_number" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="phone_number" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="email" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="hire_date" type="DATE"/>
+            <column name="start_working_day" type="TIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="end_time" type="time">
+            <column name="end_working_day" type="TIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="specialization" type="varchar(200)"/>
+            <column name="bio" type="TEXT"/>
         </createTable>
     </changeSet>
 
