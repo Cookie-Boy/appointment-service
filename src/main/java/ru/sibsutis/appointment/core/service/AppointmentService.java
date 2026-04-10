@@ -162,7 +162,7 @@ public class AppointmentService {
             String slotKey = "slots:doctor:" + doctor.getId() + ":date:" + date.toLocalDate();
             LocalTime tempTime = date.toLocalTime();
 
-            while (!tempTime.isBefore(doctor.getEndTime())) {
+            while (!tempTime.isBefore(doctor.getEndWorkingDay())) {
                 String slotTime = formatTimeSlot(tempTime, tempTime.plusMinutes(30));
                 String status = (String) redisTemplate.opsForHash().get(slotKey, slotTime);
 
@@ -193,7 +193,7 @@ public class AppointmentService {
                     .withNano(0)
                     .plusHours(date.getMinute() > 30 ? 1 : 0);
         }
-        return date.with(doctor.getStartTime());
+        return date.with(doctor.getStartWorkingDay());
     }
 
     private String formatTimeSlot(LocalDateTime start, LocalDateTime end) {

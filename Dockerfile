@@ -2,22 +2,25 @@ FROM eclipse-temurin:21-jdk as builder
 
 WORKDIR /app
 
-# 1. Копируем только необходимые для сборки файлы
+# Копируем только файлы для загрузки зависимостей
 COPY gradlew .
 COPY gradle gradle
 COPY build.gradle .
 COPY settings.gradle .
+
+# Даём права и загружаем зависимости (этот слой будет кэшироваться)
+RUN chmod +x gradlew && ./gradlew dependencies --no-daemon
+
+# Теперь копируем исходный код и собираем
 COPY src src
+RUN ./gradlew clean build -x test --no-daemon
 
-# 2. Даем права и запускаем сборку
-RUN chmod +x gradlew && ./gradlew clean build -x test
-
-# 3. Финальный образ
+# Финальный образ
 FROM eclipse-temurin:21-jre
 WORKDIR /app
 
-# 4. Копируем только результат сборки
+# Копируем собранный jar
 COPY --from=builder /app/build/libs/*.jar app.jar
 
-# 5. Запуск с ограничением памяти
+# Запуск с ограничением памяти
 ENTRYPOINT ["java", "-Xms256m", "-Xmx512m", "-jar", "app.jar"]
