@@ -1,0 +1,296 @@
+openapi: 3.0.1
+info:
+  title: Appointment Service API
+  description: API для управления записью на приём
+  version: 1.0.0
+  contact:
+    name: SibSUTI Team
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /appointment:
+    post:
+      summary: Создать новую запись на приём
+      operationId: createAppointment
+      tags:
+        - Appointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentRequestDto'
+            example:
+              clinicId: "123e4567-e89b-12d3-a456-426614174000"
+              doctorId: "223e4567-e89b-12d3-a456-426614174001"
+              patientId: "323e4567-e89b-12d3-a456-426614174002"
+              tgUserName: "@ivan_petrov"
+              startTime: "2025-01-20T10:00:00"
+              endTime: "2025-01-20T10:30:00"
+              metadata:
+                source: "telegram_bot"
+                comment: "Первичный приём"
+      responses:
+        '200':
+          description: Запись успешно создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponseDto'
+        '400':
+          description: Некорректные данные запроса
+        '404':
+          description: Клиника, врач или пациент не найдены
+        '409':
+          description: Время уже занято
+
+  /appointment/patient/{patientId}:
+    get:
+      summary: Получить все записи пациента по ID
+      operationId: getPatientAppointments
+      tags:
+        - Appointment
+      parameters:
+        - name: patientId
+          in: path
+          required: true
+          description: UUID пациента
+          schema:
+            type: string
+            format: uuid
+          example: "323e4567-e89b-12d3-a456-426614174002"
+      responses:
+        '200':
+          description: Список записей пациента
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppointmentResponseDto'
+        '404':
+          description: Пациент не найден
+
+  /appointment/tgUser/{tgUserName}:
+    get:
+      summary: Получить все записи пользователя по имени в Telegram
+      operationId: getTgUserAppointments
+      tags:
+        - Appointment
+      parameters:
+        - name: tgUserName
+          in: path
+          required: true
+          description: Имя пользователя в Telegram (с @ или без)
+          schema:
+            type: string
+          example: "@ivan_petrov"
+      responses:
+        '200':
+          description: Список записей пользователя Telegram
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppointmentResponseDto'
+        '404':
+          description: Пользователь Telegram не найден
+
+  /appointment/{id}:
+    delete:
+      summary: Отменить запись на приём
+      operationId: cancelAppointment
+      tags:
+        - Appointment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: UUID записи на приём
+          schema:
+            type: string
+            format: uuid
+          example: "a123e456-e89b-12d3-a456-426614174999"
+      responses:
+        '200':
+          description: Запись успешно отменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponseDto'
+        '404':
+          description: Запись не найдена
+        '400':
+          description: Невозможно отменить запись (например, уже прошла)
+
+components:
+  schemas:
+    AppointmentRequestDto:
+      type: object
+      required:
+        - clinicId
+        - doctorId
+        - startTime
+        - endTime
+      properties:
+        clinicId:
+          type: string
+          format: uuid
+          description: UUID клиники
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        doctorId:
+          type: string
+          format: uuid
+          description: UUID врача
+          example: "223e4567-e89b-12d3-a456-426614174001"
+        patientId:
+          type: string
+          format: uuid
+          description: UUID пациента (может быть null, если запись через Telegram)
+          example: "323e4567-e89b-12d3-a456-426614174002"
+          nullable: true
+        tgUserName:
+          type: string
+          description: Имя пользователя в Telegram
+          example: "@ivan_petrov"
+          nullable: true
+        startTime:
+          type: string
+          format: date-time
+          description: Начало приёма
+          example: "2025-01-20T10:00:00"
+        endTime:
+          type: string
+          format: date-time
+          description: Конец приёма
+          example: "2025-01-20T10:30:00"
+        metadata:
+          type: object
+          description: Дополнительные метаданные
+          additionalProperties: true
+          example:
+            source: "telegram_bot"
+            comment: "Первичный приём"
+      additionalProperties: false
+
+    AppointmentResponseDto:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: UUID записи
+          example: "a123e456-e89b-12d3-a456-426614174999"
+        clinicId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        clinicName:
+          type: string
+          description: Название клиники (дополнительное поле)
+          example: "СибГУТИ Медицинский центр"
+        doctorId:
+          type: string
+          format: uuid
+          example: "223e4567-e89b-12d3-a456-426614174001"
+        doctorFullName:
+          type: string
+          description: ФИО врача
+          example: "Иванова Анна Петровна"
+        patientId:
+          type: string
+          format: uuid
+          example: "323e4567-e89b-12d3-a456-426614174002"
+          nullable: true
+        patientFullName:
+          type: string
+          description: ФИО пациента
+          example: "Петров Иван Сергеевич"
+          nullable: true
+        startTime:
+          type: string
+          format: date-time
+          example: "2025-01-20T10:00:00"
+        endTime:
+          type: string
+          format: date-time
+          example: "2025-01-20T10:30:00"
+        status:
+          type: string
+          description: Статус записи (BOOKED, CANCELLED, COMPLETED)
+          enum:
+            - BOOKED
+            - CANCELLED
+            - COMPLETED
+          example: "BOOKED"
+        createdAt:
+          type: string
+          format: date-time
+          description: Дата и время создания записи
+          example: "2025-01-10T09:15:00"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Дата и время последнего обновления
+          example: "2025-01-10T09:15:00"
+        metadata:
+          type: object
+          description: Дополнительные метаданные
+          additionalProperties: true
+          example:
+            source: "telegram_bot"
+            comment: "Первичный приём"
+      additionalProperties: false
+
+    SuccessResponseDto:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Флаг успешности операции
+          example: true
+        message:
+          type: string
+          description: Сообщение об успешном выполнении
+          example: "Appointment cancelled successfully"
+      additionalProperties: false
+
+  examples:
+    AppointmentRequestExample:
+      summary: Пример запроса на создание записи
+      value:
+        clinicId: "123e4567-e89b-12d3-a456-426614174000"
+        doctorId: "223e4567-e89b-12d3-a456-426614174001"
+        patientId: "323e4567-e89b-12d3-a456-426614174002"
+        tgUserName: "@ivan_petrov"
+        startTime: "2025-01-20T10:00:00"
+        endTime: "2025-01-20T10:30:00"
+        metadata:
+          source: "telegram_bot"
+          comment: "Первичный приём"
+
+    AppointmentResponseExample:
+      summary: Пример успешного ответа
+      value:
+        id: "a123e456-e89b-12d3-a456-426614174999"
+        clinicId: "123e4567-e89b-12d3-a456-426614174000"
+        clinicName: "СибГУТИ Медицинский центр"
+        doctorId: "223e4567-e89b-12d3-a456-426614174001"
+        doctorFullName: "Иванова Анна Петровна"
+        patientId: "323e4567-e89b-12d3-a456-426614174002"
+        patientFullName: "Петров Иван Сергеевич"
+        startTime: "2025-01-20T10:00:00"
+        endTime: "2025-01-20T10:30:00"
+        status: "BOOKED"
+        createdAt: "2025-01-10T09:15:00"
+        updatedAt: "2025-01-10T09:15:00"
+        metadata:
+          source: "telegram_bot"
+          comment: "Первичный приём"
+
+tags:
+  - name: Appointment
+    description: Операции с записями на приём
