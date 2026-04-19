@@ -9,7 +9,7 @@ COPY build.gradle .
 COPY settings.gradle .
 
 # Даём права и загружаем зависимости (этот слой будет кэшироваться)
-RUN chmod +x gradlew && ./gradlew dependencies --no-daemon
+RUN sed -i 's/\r$//' gradlew && chmod +x gradlew && ./gradlew dependencies --no-daemon
 
 # Теперь копируем исходный код и собираем
 COPY src src
