@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import ru.sibsutis.appointment.api.dto.AppointmentRequestDto;
 import ru.sibsutis.appointment.api.dto.AppointmentResponseDto;
 import ru.sibsutis.appointment.api.dto.SuccessResponseDto;
+import ru.sibsutis.appointment.api.dto.TimeSlotDto;
 import ru.sibsutis.appointment.api.mapper.AppointmentMapper;
 import ru.sibsutis.appointment.core.exception.BookingException;
 import ru.sibsutis.appointment.core.exception.SlotAlreadyBookedException;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -29,7 +31,7 @@ public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final ClinicRepository clinicRepository;
     private final DoctorRepository doctorRepository;
-    private final PatientRepository patientRepository;
+    private final PatientRepository ownerRepository;
 
     private final AppointmentMapper appointmentMapper;
 
@@ -61,7 +63,7 @@ public class AppointmentService {
             endTime = dto.endTime();
         }
 
-        Patient patient = patientRepository.findById(dto.patientId())
+        Patient patient = ownerRepository.findById(dto.patientId())
                 .orElseThrow(() -> new EntityNotFoundException("Patient not found"));
 
         LocalDate date = startTime.toLocalDate();
@@ -132,14 +134,56 @@ public class AppointmentService {
         return new SuccessResponseDto(200, "Бронь успешно отменена");
     }
 
-    public List<AppointmentResponseDto> getPatientAppointments(UUID patientId) {
-        List<Appointment> appointments = appointmentRepository.findByPatientId(patientId);
+    public List<AppointmentResponseDto> getOwnerAppointments(UUID ownerId) {
+        List<Appointment> appointments = appointmentRepository.findByPatientId(ownerId);
         return appointmentMapper.toDto(appointments);
     }
 
     public List<AppointmentResponseDto> getTgUserAppointments(String tgUserName) {
         List<Appointment> appointments = appointmentRepository.findByTgUserName(tgUserName);
         return appointmentMapper.toDto(appointments);
+    }
+
+    public List<TimeSlotDto> getAvailableSlots(String doctorId, LocalDate date) {
+        List<TimeSlotDto> availableSlots = new ArrayList<>();
+
+        List<Doctor> doctorsToCheck;
+        if (doctorId != null && !doctorId.isEmpty()) {
+            UUID doctorUUID = UUID.fromString(doctorId);
+            Doctor doctor = doctorRepository.findById(doctorUUID)
+                    .orElseThrow(() -> new EntityNotFoundException("Doctor not found"));
+            doctorsToCheck = List.of(doctor);
+        } else {
+            doctorsToCheck = doctorRepository.findAll();
+        }
+
+        for (Doctor doctor : doctorsToCheck) {
+            String slotKey = "slots:doctor:%s:date:%s".formatted(doctor.getId(), date);
+
+            Map<Object, Object> bookedSlots = redisTemplate.opsForHash().entries(slotKey);
+            Set<String> bookedTimeSlots = bookedSlots.keySet().stream()
+                    .map(Object::toString)
+                    .collect(Collectors.toSet());
+
+            LocalTime currentSlot = doctor.getStartWorkingDay();
+            LocalTime endOfDay = doctor.getEndWorkingDay();
+
+            while (!currentSlot.isAfter(endOfDay.minusMinutes(30))) {
+                String slotTime = formatTimeSlot(currentSlot, currentSlot.plusMinutes(30));
+
+                if (!bookedTimeSlots.contains(slotTime)) {
+                    availableSlots.add(TimeSlotDto.builder()
+                            .startTime(currentSlot.toString())
+                            .endTime(currentSlot.plusMinutes(30).toString())
+                            .build());
+                }
+
+                currentSlot = currentSlot.plusMinutes(30);
+            }
+        }
+
+        availableSlots.sort(Comparator.comparing(TimeSlotDto::getStartTime));
+        return availableSlots;
     }
 
     private Doctor findOptimalDoctor(UUID clinicId) {
