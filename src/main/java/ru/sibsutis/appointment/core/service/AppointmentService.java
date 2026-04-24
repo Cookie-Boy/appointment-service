@@ -126,7 +126,7 @@ public class AppointmentService {
         return new SuccessResponseDto(200, "Бронь успешно отменена");
     }
 
-    public List<AppointmentResponseDto> getOwnerAppointments(UUID ownerId) {
+    public List<AppointmentResponseDto> getOwnerAppointments(String ownerId) {
         List<Appointment> appointments = appointmentRepository.findByOwnerId(ownerId);
         return appointmentMapper.toDto(appointments);
     }

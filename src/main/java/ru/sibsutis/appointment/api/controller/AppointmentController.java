@@ -30,7 +30,7 @@ public class AppointmentController {
     }
 
     @GetMapping("/owner/{ownerId}")
-    public ResponseEntity<List<AppointmentResponseDto>> getOwnerAppointments(@PathVariable UUID ownerId) {
+    public ResponseEntity<List<AppointmentResponseDto>> getOwnerAppointments(@PathVariable String ownerId) {
         List<AppointmentResponseDto> response = appointmentService.getOwnerAppointments(ownerId);
         return ResponseEntity.ok(response);
     }
