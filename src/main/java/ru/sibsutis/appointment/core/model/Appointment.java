@@ -27,17 +27,11 @@ public class Appointment {
     @Column(columnDefinition = "uuid")
     private UUID id;
 
-    @ManyToOne
-    @JoinColumn(name = "clinic_id", nullable = false)
-    private Clinic clinic;
+    @Column(nullable = false)
+    private UUID doctorId;
 
-    @ManyToOne
-    @JoinColumn(name = "doctor_id", nullable = false)
-    private Doctor doctor;
-
-    @ManyToOne
-    @JoinColumn(name = "patient_id", nullable = false)
-    private Patient patient;
+    @Column(nullable = false)
+    private String ownerId;
 
     @Column(nullable = false)
     private LocalDateTime startTime;

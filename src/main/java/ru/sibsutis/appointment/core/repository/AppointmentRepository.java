@@ -19,7 +19,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
 
     Optional<Appointment> findByStartTime(LocalDateTime startTime);
     List<Appointment> findByTgUserName(String tgUserName);
-    List<Appointment> findByPatientId(UUID patientId);
+    List<Appointment> findByOwnerId(UUID ownerId);
     List<Appointment> findByStartTimeBetween(LocalDateTime start, LocalDateTime end);
     List<Appointment> findByEndTimeBeforeAndStatus(LocalDateTime endTime, AppointmentStatus status);
 }

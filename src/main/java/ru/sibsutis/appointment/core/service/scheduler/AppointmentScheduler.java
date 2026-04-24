@@ -7,7 +7,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
+import ru.sibsutis.appointment.api.client.ManagementServiceClient;
 import ru.sibsutis.appointment.api.client.TelegramServiceClient;
+import ru.sibsutis.appointment.api.dto.DoctorDto;
 import ru.sibsutis.appointment.core.exception.NotificationException;
 import ru.sibsutis.appointment.core.model.Appointment;
 import ru.sibsutis.appointment.core.model.AppointmentStatus;
@@ -28,6 +30,7 @@ public class AppointmentScheduler {
     private final RedisTemplate<String, String> redisTemplate;
     private final AppointmentRepository appointmentRepository;
     private final TelegramServiceClient telegramServiceClient;
+    private final ManagementServiceClient managementServiceClient;
 
     @Scheduled(fixedRate = 60_000)
     public void checkUpcomingAppointments() {
@@ -55,11 +58,13 @@ public class AppointmentScheduler {
                 continue;
             }
 
+            DoctorDto doctor = managementServiceClient.getDoctorById(app.getDoctorId());
+
             try {
                 ResponseEntity<?> result = telegramServiceClient.sendNotification(
                         app.getTgUserName(),
                         "До вашего приёма остался 1 час ⏳" +
-                                "\nВрач: " + app.getDoctor().getFirstName() + " " + app.getDoctor().getLastName() +
+                                "\nВрач: " + doctor.firstName() + " " + doctor.lastName() +
                                 "\nВремя: " + app.getStartTime().format(TIME_FORMATTER));
 
                 if (result.getStatusCode().is2xxSuccessful()) {
@@ -91,11 +96,13 @@ public class AppointmentScheduler {
                 cleanRedisSlot(app);
                 log.info("Confirmed appointment: {}", app.getId());
 
+                DoctorDto doctor = managementServiceClient.getDoctorById(app.getDoctorId());
+
                 if (app.getTgUserName() != null) {
                     telegramServiceClient.sendNotification(
                             app.getTgUserName(),
                             "Ваш прием уже начинается!" +
-                                    "\nВрач: " + app.getDoctor().getFirstName() + " " + app.getDoctor().getLastName() +
+                                    "\nВрач: " + doctor.firstName() + " " + doctor.lastName() +
                                     "\nВремя: " + app.getStartTime().format(TIME_FORMATTER)
                     );
                     log.info("Sent notification for appointment: {}", app.getId());
@@ -107,7 +114,7 @@ public class AppointmentScheduler {
     private void cleanRedisSlot(Appointment app) {
         String slotKey = "slots:doctor:%s:date:%s"
                 .formatted(
-                        app.getDoctor().getId(),
+                        app.getDoctorId(),
                         app.getStartTime().toLocalDate()
                 );
 

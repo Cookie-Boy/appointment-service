@@ -5,9 +5,8 @@ import java.util.Map;
 import java.util.UUID;
 
 public record AppointmentRequestDto(
-        UUID clinicId,
         UUID doctorId,
-        UUID patientId,
+        UUID ownerId,
         String tgUserName,
         LocalDateTime startTime,
         LocalDateTime endTime,

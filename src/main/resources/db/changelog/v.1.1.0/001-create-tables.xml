@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.6.xsd">
+
+    <!-- Таблица бронирований -->
+    <changeSet id="001-create-appointments-table" author="cool_developer">
+        <createTable tableName="appointments">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="doctor_id" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="owner_id" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_time" type="timestamp with time zone">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_time" type="timestamp with time zone">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tg_user_name" type="varchar(100)" />
+            <column name="status" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="timestamp with time zone" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata" type="jsonb"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

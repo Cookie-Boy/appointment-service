@@ -53,7 +53,7 @@ paths:
       tags:
         - Appointment
       parameters:
-        - name: patientId
+        - name: ownerId
           in: path
           required: true
           description: UUID пациента

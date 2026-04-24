@@ -6,10 +6,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import ru.sibsutis.appointment.api.dto.AppointmentRequestDto;
-import ru.sibsutis.appointment.api.dto.AppointmentResponseDto;
-import ru.sibsutis.appointment.api.dto.SuccessResponseDto;
-import ru.sibsutis.appointment.api.dto.TimeSlotDto;
+import ru.sibsutis.appointment.api.client.ManagementServiceClient;
+import ru.sibsutis.appointment.api.client.ProfileServiceClient;
+import ru.sibsutis.appointment.api.dto.*;
 import ru.sibsutis.appointment.api.mapper.AppointmentMapper;
 import ru.sibsutis.appointment.core.exception.BookingException;
 import ru.sibsutis.appointment.core.exception.SlotAlreadyBookedException;
@@ -29,29 +28,24 @@ import java.util.stream.Collectors;
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
-    private final ClinicRepository clinicRepository;
-    private final DoctorRepository doctorRepository;
-    private final PatientRepository ownerRepository;
-
     private final AppointmentMapper appointmentMapper;
+
+    private final ProfileServiceClient profileServiceClient;
+    private final ManagementServiceClient managementServiceClient;
 
     private final RedisTemplate<String, String> redisTemplate;
 
     @Transactional
     public AppointmentResponseDto bookAppointment(AppointmentRequestDto dto) {
-        Clinic clinic = clinicRepository.findById(dto.clinicId())
-                .orElseThrow(() -> new EntityNotFoundException("Clinic not found"));
-
-        Doctor doctor;
+        DoctorDto doctor;
         LocalDateTime startTime;
         LocalDateTime endTime;
 
         if (dto.doctorId() == null) {
             log.info("Doctor ID is null -> try to find optimal doctor.");
-            doctor = findOptimalDoctor(clinic.getId());
+            doctor = findOptimalDoctor();
         } else {
-            doctor = doctorRepository.findById(dto.doctorId())
-                    .orElseThrow(() -> new EntityNotFoundException("Doctor not found"));
+            doctor = managementServiceClient.getDoctorById(dto.doctorId());
         }
 
         if (dto.startTime() == null) {
@@ -63,14 +57,13 @@ public class AppointmentService {
             endTime = dto.endTime();
         }
 
-        Patient patient = ownerRepository.findById(dto.patientId())
-                .orElseThrow(() -> new EntityNotFoundException("Patient not found"));
+        OwnerDto owner = profileServiceClient.getOwnerById(dto.ownerId());
 
         LocalDate date = startTime.toLocalDate();
         String preferredTime = formatTimeSlot(startTime, endTime);
 
         String slotKey = "slots:doctor:%s:date:%s".formatted(
-                doctor.getId(),
+                doctor.id(),
                 date
         );
 
@@ -87,9 +80,8 @@ public class AppointmentService {
 
         try {
             Appointment appointment = appointmentMapper.toEntity(dto);
-            appointment.setClinic(clinic);
-            appointment.setDoctor(doctor);
-            appointment.setPatient(patient);
+            appointment.setDoctorId(doctor.id());
+            appointment.setOwnerId(owner.getId());
             appointment.setStartTime(startTime);
             appointment.setEndTime(endTime);
             appointment.setTgUserName(dto.tgUserName());
@@ -103,7 +95,7 @@ public class AppointmentService {
                     appointment.getId().toString()
             );
 
-            String loadKey = "doctor_load:%s".formatted(doctor.getId());
+            String loadKey = "doctor_load:%s".formatted(doctor.id());
             redisTemplate.opsForZSet().incrementScore(loadKey, "total", 1);
 
             return appointmentMapper.toDto(appointment);
@@ -125,17 +117,17 @@ public class AppointmentService {
         appointmentRepository.save(app);
 
         redisTemplate.opsForHash().delete(
-                "slots:doctor:" + app.getDoctor().getId() + ":date:" + app.getStartTime().toLocalDate(),
+                "slots:doctor:" + app.getDoctorId() + ":date:" + app.getStartTime().toLocalDate(),
                 formatTimeSlot(app.getStartTime(), app.getEndTime())
         );
-        String loadKey = "doctor_load:" + app.getDoctor().getId();
+        String loadKey = "doctor_load:" + app.getDoctorId();
         redisTemplate.opsForZSet().incrementScore(loadKey, "total", -1);
 
         return new SuccessResponseDto(200, "Бронь успешно отменена");
     }
 
     public List<AppointmentResponseDto> getOwnerAppointments(UUID ownerId) {
-        List<Appointment> appointments = appointmentRepository.findByPatientId(ownerId);
+        List<Appointment> appointments = appointmentRepository.findByOwnerId(ownerId);
         return appointmentMapper.toDto(appointments);
     }
 
@@ -147,26 +139,25 @@ public class AppointmentService {
     public List<TimeSlotDto> getAvailableSlots(String doctorId, LocalDate date) {
         List<TimeSlotDto> availableSlots = new ArrayList<>();
 
-        List<Doctor> doctorsToCheck;
+        List<DoctorDto> doctorsToCheck;
         if (doctorId != null && !doctorId.isEmpty()) {
             UUID doctorUUID = UUID.fromString(doctorId);
-            Doctor doctor = doctorRepository.findById(doctorUUID)
-                    .orElseThrow(() -> new EntityNotFoundException("Doctor not found"));
+            DoctorDto doctor = managementServiceClient.getDoctorById(doctorUUID);
             doctorsToCheck = List.of(doctor);
         } else {
-            doctorsToCheck = doctorRepository.findAll();
+            doctorsToCheck = managementServiceClient.getAllDoctors();
         }
 
-        for (Doctor doctor : doctorsToCheck) {
-            String slotKey = "slots:doctor:%s:date:%s".formatted(doctor.getId(), date);
+        for (DoctorDto doctor : doctorsToCheck) {
+            String slotKey = "slots:doctor:%s:date:%s".formatted(doctor.id(), date);
 
             Map<Object, Object> bookedSlots = redisTemplate.opsForHash().entries(slotKey);
             Set<String> bookedTimeSlots = bookedSlots.keySet().stream()
                     .map(Object::toString)
                     .collect(Collectors.toSet());
 
-            LocalTime currentSlot = doctor.getStartWorkingDay();
-            LocalTime endOfDay = doctor.getEndWorkingDay();
+            LocalTime currentSlot = doctor.startWorkingDay();
+            LocalTime endOfDay = doctor.endWorkingDay();
 
             while (!currentSlot.isAfter(endOfDay.minusMinutes(30))) {
                 String slotTime = formatTimeSlot(currentSlot, currentSlot.plusMinutes(30));
@@ -186,42 +177,32 @@ public class AppointmentService {
         return availableSlots;
     }
 
-    private Doctor findOptimalDoctor(UUID clinicId) {
-        List<Doctor> doctors = doctorRepository.findAllByClinicId(clinicId);
+    private DoctorDto findOptimalDoctor() {
+        List<DoctorDto> doctors = managementServiceClient.getAllDoctors();
 
         return doctors.stream()
                 .min((d1, d2) -> {
-                    Double load1 = redisTemplate.opsForZSet().score("doctor_load:" + d1.getId(), "total");
-                    Double load2 = redisTemplate.opsForZSet().score("doctor_load:" + d2.getId(), "total");
+                    Double load1 = redisTemplate.opsForZSet().score("doctor_load:" + d1.id(), "total");
+                    Double load2 = redisTemplate.opsForZSet().score("doctor_load:" + d2.id(), "total");
                     return Double.compare(load1 != null ? load1 : 0, load2 != null ? load2 : 0);
                 })
                 .orElseThrow(() -> new EntityNotFoundException("Нет доступных врачей"));
     }
 
-    private LocalDateTime findNearestAvailableSlot(Doctor doctor) {
+    private LocalDateTime findNearestAvailableSlot(DoctorDto doctor) {
         LocalDateTime now = LocalDateTime.now();
         for (int i = 0; i < 14; i++) {
             LocalDateTime date = adjustDateTime(now.plusDays(i), doctor, i == 0);
 
-            String slotKey = "slots:doctor:" + doctor.getId() + ":date:" + date.toLocalDate();
+            String slotKey = "slots:doctor:" + doctor.id() + ":date:" + date.toLocalDate();
             LocalTime tempTime = date.toLocalTime();
 
-            while (!tempTime.isBefore(doctor.getEndWorkingDay())) {
+            while (!tempTime.isBefore(doctor.endWorkingDay())) {
                 String slotTime = formatTimeSlot(tempTime, tempTime.plusMinutes(30));
                 String status = (String) redisTemplate.opsForHash().get(slotKey, slotTime);
 
                 if (status == null) {
                     return tempTime.atDate(date.toLocalDate());
-//                    LocalDateTime slotDateTime = tempTime.atDate(date.toLocalDate());
-
-//                    boolean isSlotFreeInDb = appointmentRepository.findByStartTime(slotDateTime).isEmpty();
-
-//                    if (isSlotFreeInDb) {
-//                        return slotDateTime;
-//                    } else {
-//                         Обновляем Redis, если данные устарели
-//                        redisTemplate.opsForHash().put(slotKey, slotTime, "locked");
-//                    }
                 }
                 tempTime = tempTime.plusMinutes(30);
             }
@@ -230,14 +211,14 @@ public class AppointmentService {
         throw new EntityNotFoundException("Нет свободных слотов на ближайшие 2 недели.");
     }
 
-     private LocalDateTime adjustDateTime(LocalDateTime date, Doctor doctor, boolean isCurrentDay) {
+     private LocalDateTime adjustDateTime(LocalDateTime date, DoctorDto doctor, boolean isCurrentDay) {
         if (isCurrentDay) {
             return date.withMinute(date.getMinute() <= 30 ? 30 : 0)
                     .withSecond(0)
                     .withNano(0)
                     .plusHours(date.getMinute() > 30 ? 1 : 0);
         }
-        return date.with(doctor.getStartWorkingDay());
+        return date.with(doctor.startWorkingDay());
     }
 
     private String formatTimeSlot(LocalDateTime start, LocalDateTime end) {
