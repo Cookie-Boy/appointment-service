@@ -11,18 +11,6 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface AppointmentMapper {
     Appointment toEntity(AppointmentRequestDto dto);
-
-    @Mapping(source = "doctor.id", target = "doctorId")
-    @Mapping(
-            expression = "java(appointment.getDoctor().getFirstName() + \" \" + appointment.getDoctor().getLastName())",
-            target = "doctorFullName"
-    )
-    @Mapping(source = "owner.id", target = "ownerId")
-    @Mapping(
-            expression = "java(appointment.getPatient().getFirstName() + \" \" + appointment.getPatient().getLastName())",
-            target = "patientFullName"
-    )
     AppointmentResponseDto toDto(Appointment appointment);
-
     List<AppointmentResponseDto> toDto(List<Appointment> appointments);
 }
