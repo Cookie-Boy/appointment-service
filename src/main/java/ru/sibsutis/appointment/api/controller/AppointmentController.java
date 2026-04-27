@@ -51,6 +51,7 @@ public class AppointmentController {
             @RequestParam(required = false) String doctorId,
             @RequestParam String date
     ) {
+        log.info("Got the request");
         if (date == null || date.trim().isEmpty()) {
             throw new IllegalArgumentException("Date parameter is required");
         }

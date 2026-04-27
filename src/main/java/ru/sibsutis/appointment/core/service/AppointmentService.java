@@ -137,6 +137,7 @@ public class AppointmentService {
     }
 
     public List<TimeSlotDto> getAvailableSlots(String doctorId, LocalDate date) {
+        log.info("Inside service method");
         List<TimeSlotDto> availableSlots = new ArrayList<>();
 
         List<DoctorDto> doctorsToCheck;
@@ -149,6 +150,7 @@ public class AppointmentService {
         }
 
         for (DoctorDto doctor : doctorsToCheck) {
+            log.info("Doctor: {}", doctor.id());
             String slotKey = "slots:doctor:%s:date:%s".formatted(doctor.id(), date);
 
             Map<Object, Object> bookedSlots = redisTemplate.opsForHash().entries(slotKey);
