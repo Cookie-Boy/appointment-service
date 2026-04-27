@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TokenProvider {
     private final OAuth2AuthorizedClientManager clientManager;
-    private final String clientRegistrationId = "appointment";
+    private final String clientRegistrationId = "appointment-service";
 
     public String getFreshToken() {
         OAuth2AuthorizedClient client = clientManager.authorize(
