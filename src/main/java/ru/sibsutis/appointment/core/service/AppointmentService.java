@@ -73,7 +73,7 @@ public class AppointmentService {
                 preferredTime,
                 "locked"
         );
-        
+
         if (Boolean.FALSE.equals(isSlotFree)) {
             redisTemplate.opsForHash().delete(slotKey, preferredTime);
             throw new SlotAlreadyBookedException("На это время уже забронировано!");
@@ -139,7 +139,7 @@ public class AppointmentService {
 
     public List<TimeSlotDto> getAvailableSlots(String doctorId, LocalDate date) {
         log.info("Inside service method");
-        List<TimeSlotDto> availableSlots = new ArrayList<>();
+        Set<TimeSlotDto> availableSlots = new HashSet<>();
 
         List<DoctorDto> doctorsToCheck;
         if (doctorId != null && !doctorId.isEmpty()) {
@@ -176,8 +176,9 @@ public class AppointmentService {
             }
         }
 
-        availableSlots.sort(Comparator.comparing(TimeSlotDto::getStartTime));
-        return availableSlots;
+        return availableSlots.stream()
+                .sorted(Comparator.comparing(TimeSlotDto::getStartTime))
+                .toList();
     }
 
     private DoctorDto findOptimalDoctor() {
