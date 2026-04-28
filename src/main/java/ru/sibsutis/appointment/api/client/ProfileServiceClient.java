@@ -8,7 +8,6 @@ import org.springframework.web.client.RestClient;
 import ru.sibsutis.appointment.api.dto.OwnerDto;
 
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Component
@@ -17,8 +16,8 @@ public class ProfileServiceClient {
     private final RestClient restClient;
     private final TokenProvider tokenProvider;
 
-    public OwnerDto getOwnerById(UUID ownerId) {
-        if (ownerId == null || ownerId.toString().isBlank()) {
+    public OwnerDto getOwnerById(String ownerId) {
+        if (ownerId == null || ownerId.isBlank()) {
             throw new IllegalArgumentException("ownerId cannot be null or empty");
         }
 

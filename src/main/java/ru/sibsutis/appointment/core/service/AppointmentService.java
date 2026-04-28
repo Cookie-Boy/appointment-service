@@ -58,8 +58,6 @@ public class AppointmentService {
             endTime = dto.endTime();
         }
 
-        OwnerDto owner = profileServiceClient.getOwnerById(dto.ownerId());
-
         LocalDate date = startTime.toLocalDate();
         String preferredTime = formatTimeSlot(startTime, endTime);
 
@@ -82,7 +80,8 @@ public class AppointmentService {
         try {
             Appointment appointment = appointmentMapper.toEntity(dto);
             appointment.setDoctorId(doctor.id());
-            appointment.setOwnerId(owner.getId());
+            appointment.setOwnerId(dto.ownerId());
+            appointment.setPetId(dto.petId());
             appointment.setStartTime(startTime);
             appointment.setEndTime(endTime);
             appointment.setTgUserName(dto.tgUserName());
