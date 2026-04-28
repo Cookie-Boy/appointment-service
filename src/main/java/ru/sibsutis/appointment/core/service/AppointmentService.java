@@ -5,6 +5,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import ru.sibsutis.appointment.api.client.ManagementServiceClient;
 import ru.sibsutis.appointment.api.client.ProfileServiceClient;
@@ -33,7 +34,7 @@ public class AppointmentService {
     private final ProfileServiceClient profileServiceClient;
     private final ManagementServiceClient managementServiceClient;
 
-    private final RedisTemplate<String, String> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
 
     @Transactional
     public AppointmentResponseDto bookAppointment(AppointmentRequestDto dto) {
@@ -72,7 +73,7 @@ public class AppointmentService {
                 preferredTime,
                 "locked"
         );
-
+        
         if (Boolean.FALSE.equals(isSlotFree)) {
             redisTemplate.opsForHash().delete(slotKey, preferredTime);
             throw new SlotAlreadyBookedException("На это время уже забронировано!");

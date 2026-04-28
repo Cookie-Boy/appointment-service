@@ -21,13 +21,6 @@ public class RedisConfig {
     @Value("${spring.redis.port}")
     private int redisPort;
 
-    @Bean
-    public RedisTemplate<?, ?> redisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<?, ?> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-        return template;
-    }
-
     @PostConstruct
     public void checkRedisConnection() {
         log.info("Attempting to connect to Redis at {}:{}", redisHost, redisPort);
