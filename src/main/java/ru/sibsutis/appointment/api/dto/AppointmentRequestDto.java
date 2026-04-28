@@ -7,6 +7,7 @@ import java.util.UUID;
 public record AppointmentRequestDto(
         UUID doctorId,
         UUID ownerId,
+        UUID petId,
         String tgUserName,
         LocalDateTime startTime,
         LocalDateTime endTime,

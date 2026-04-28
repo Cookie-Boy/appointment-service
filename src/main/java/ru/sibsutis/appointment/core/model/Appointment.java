@@ -34,6 +34,9 @@ public class Appointment {
     private String ownerId;
 
     @Column(nullable = false)
+    private String petId;
+
+    @Column(nullable = false)
     private LocalDateTime startTime;
 
     @Column(nullable = false)

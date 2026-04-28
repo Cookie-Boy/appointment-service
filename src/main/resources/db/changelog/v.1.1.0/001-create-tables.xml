@@ -17,6 +17,9 @@
             <column name="owner_id" type="varchar(50)">
                 <constraints nullable="false"/>
             </column>
+            <column name="pet_id" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
             <column name="start_time" type="timestamp with time zone">
                 <constraints nullable="false"/>
             </column>

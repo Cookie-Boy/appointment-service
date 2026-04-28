@@ -18,6 +18,10 @@ public class ProfileServiceClient {
     private final TokenProvider tokenProvider;
 
     public OwnerDto getOwnerById(UUID ownerId) {
+        if (ownerId == null || ownerId.toString().isBlank()) {
+            throw new IllegalArgumentException("ownerId cannot be null or empty");
+        }
+
         String token = tokenProvider.getFreshToken();
         log.info("Fresh token for calling profile-service: {}", token);
         return restClient.get()

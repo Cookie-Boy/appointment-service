@@ -8,6 +8,7 @@ public record AppointmentResponseDto(
         UUID id,
         UUID doctorId,
         UUID ownerId,
+        UUID petId,
         LocalDateTime startTime,
         LocalDateTime endTime,
         String status,
