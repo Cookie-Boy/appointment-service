@@ -19,22 +19,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
-//    @ExceptionHandler(UsernameNotFoundException.class)
-//    public ResponseEntity<ErrorResponseDto> handleUsernameNotFoundException(UsernameNotFoundException ex) {
-//        ErrorResponseDto errorResponse = new ErrorResponseDto(404, ex.getMessage());
-//        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
-//    }
-
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorResponseDto> handleRuntimeException(Exception ex) {
-        ErrorResponseDto errorResponse = new ErrorResponseDto(400, ex.getMessage());
-        log.error("Error: {}", ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-    }
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleGeneralException(Exception ex) {
         ErrorResponseDto errorResponse = new ErrorResponseDto(500, ex.getMessage());
+        log.error("Error: {}", ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
 }
