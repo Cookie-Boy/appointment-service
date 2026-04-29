@@ -31,6 +31,7 @@ public class AppointmentController {
 
     @GetMapping("/owner/{ownerId}")
     public ResponseEntity<List<AppointmentResponseDto>> getOwnerAppointments(@PathVariable String ownerId) {
+        log.info("Got the request. Trying to fetch owner's appointments...");
         List<AppointmentResponseDto> response = appointmentService.getOwnerAppointments(ownerId);
         return ResponseEntity.ok(response);
     }
