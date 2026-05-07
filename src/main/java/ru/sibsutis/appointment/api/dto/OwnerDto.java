@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class OwnerDto {
     private String id;
-    private String tgChatId;
+    private String vkUserId;
     private String firstName;
     private String lastName;
     private String phone;
