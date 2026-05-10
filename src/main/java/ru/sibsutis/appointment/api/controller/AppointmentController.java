@@ -36,12 +36,6 @@ public class AppointmentController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/tgUser/{tgUserName}")
-    public ResponseEntity<List<AppointmentResponseDto>> getTgUserAppointments(@PathVariable String tgUserName) {
-        List<AppointmentResponseDto> response = appointmentService.getTgUserAppointments(tgUserName);
-        return ResponseEntity.ok(response);
-    }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<SuccessResponseDto> cancelAppointment(@PathVariable UUID id) {
         return ResponseEntity.ok(appointmentService.cancelAppointment(id));

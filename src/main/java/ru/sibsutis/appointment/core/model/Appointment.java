@@ -46,8 +46,6 @@ public class Appointment {
     @Column(nullable = false)
     private AppointmentStatus status;
 
-    private String tgUserName;
-
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

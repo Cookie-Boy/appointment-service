@@ -26,7 +26,6 @@
             <column name="end_time" type="timestamp with time zone">
                 <constraints nullable="false"/>
             </column>
-            <column name="tg_user_name" type="varchar(100)" />
             <column name="status" type="varchar(20)">
                 <constraints nullable="false"/>
             </column>

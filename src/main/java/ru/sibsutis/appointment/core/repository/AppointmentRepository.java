@@ -18,7 +18,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     Optional<Appointment> findById(@Param("id") UUID id);
 
     Optional<Appointment> findByStartTime(LocalDateTime startTime);
-    List<Appointment> findByTgUserName(String tgUserName);
     List<Appointment> findByOwnerId(String ownerId);
     List<Appointment> findByStartTimeBetween(LocalDateTime start, LocalDateTime end);
     List<Appointment> findByEndTimeBeforeAndStatus(LocalDateTime endTime, AppointmentStatus status);
