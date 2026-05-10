@@ -8,8 +8,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import ru.sibsutis.appointment.api.client.ManagementServiceClient;
+import ru.sibsutis.appointment.api.client.ProfileServiceClient;
 import ru.sibsutis.appointment.api.client.TelegramServiceClient;
 import ru.sibsutis.appointment.api.dto.DoctorDto;
+import ru.sibsutis.appointment.api.dto.OwnerDto;
 import ru.sibsutis.appointment.core.exception.NotificationException;
 import ru.sibsutis.appointment.core.model.Appointment;
 import ru.sibsutis.appointment.core.model.AppointmentStatus;
@@ -29,7 +31,9 @@ public class AppointmentScheduler {
 
     private final RedisTemplate<String, String> redisTemplate;
     private final AppointmentRepository appointmentRepository;
+
     private final TelegramServiceClient telegramServiceClient;
+    private final ProfileServiceClient profileServiceClient;
     private final ManagementServiceClient managementServiceClient;
 
     @Scheduled(fixedRate = 60_000)
@@ -46,7 +50,8 @@ public class AppointmentScheduler {
                 .findByStartTimeBetween(targetTime.minusMinutes(3), targetTime.plusMinutes(3));
 
         for (Appointment app : appointments) {
-            if (app.getStatus() == AppointmentStatus.CONFIRMED || app.getTgUserName() == null) return;
+            OwnerDto owner = profileServiceClient.getOwnerById(app.getOwnerId());
+            if (app.getStatus() == AppointmentStatus.CONFIRMED || owner.getVkUserId() == null) return;
 
             String lockKey = "hourly_notification:" + app.getId();
 
@@ -62,13 +67,13 @@ public class AppointmentScheduler {
 
             try {
                 ResponseEntity<?> result = telegramServiceClient.sendNotification(
-                        app.getTgUserName(),
+                        owner.getVkUserId(),
                         "До вашего приёма остался 1 час ⏳" +
                                 "\nВрач: " + doctor.firstName() + " " + doctor.lastName() +
                                 "\nВремя: " + app.getStartTime().format(TIME_FORMATTER));
 
                 if (result.getStatusCode().is2xxSuccessful()) {
-                    log.info("Уведомление успешно отправлено для chatId: {}", app.getTgUserName());
+                    log.info("Уведомление успешно отправлено для chatId: {}", owner.getVkUserId());
                 } else {
                     throw new RestClientException("Ошибка отправки уведомления. Статус: " + result.getStatusCode()
                             + "Тело ответа: " + result.getBody());
@@ -76,7 +81,7 @@ public class AppointmentScheduler {
 
             } catch (RestClientException e) {
                 log.error("Ошибка при отправке HTTP-запроса уведомления для chatId: {}",
-                        app.getTgUserName(), e);
+                        owner.getVkUserId(), e);
             } catch (Exception e) {
                 log.error("Непредвиденная ошибка при отправке уведомления", e);
                 throw new NotificationException("Ошибка отправки уведомления: " + e);
@@ -97,10 +102,11 @@ public class AppointmentScheduler {
                 log.info("Confirmed appointment: {}", app.getId());
 
                 DoctorDto doctor = managementServiceClient.getDoctorById(app.getDoctorId());
+                OwnerDto owner = profileServiceClient.getOwnerById(app.getOwnerId());
 
-                if (app.getTgUserName() != null) {
+                if (owner.getVkUserId() != null) {
                     telegramServiceClient.sendNotification(
-                            app.getTgUserName(),
+                            owner.getVkUserId(),
                             "Ваш прием уже начинается!" +
                                     "\nВрач: " + doctor.firstName() + " " + doctor.lastName() +
                                     "\nВремя: " + app.getStartTime().format(TIME_FORMATTER)

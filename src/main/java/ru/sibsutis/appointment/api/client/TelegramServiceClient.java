@@ -14,11 +14,11 @@ public class TelegramServiceClient {
     private final RestClient restClient;
     private final TokenProvider tokenProvider;
 
-    public ResponseEntity<?> sendNotification(String username, String text) {
+    public ResponseEntity<?> sendNotification(Long userId, String text) {
         String token = tokenProvider.getFreshToken();
         log.info("Fresh token: {}", token);
         return restClient.post()
-                .uri("/notify/{username}", username)
+                .uri("/notify/{userId}", userId)
                 .headers(httpHeaders -> httpHeaders.setBearerAuth(token))
                 .body(text)
                 .retrieve()
