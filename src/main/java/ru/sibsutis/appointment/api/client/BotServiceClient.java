@@ -10,7 +10,7 @@ import org.springframework.web.client.RestClient;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TelegramServiceClient {
+public class BotServiceClient {
     private final RestClient restClient;
     private final TokenProvider tokenProvider;
 

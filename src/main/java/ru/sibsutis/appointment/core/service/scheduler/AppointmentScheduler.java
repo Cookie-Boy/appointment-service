@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import ru.sibsutis.appointment.api.client.ManagementServiceClient;
 import ru.sibsutis.appointment.api.client.ProfileServiceClient;
-import ru.sibsutis.appointment.api.client.TelegramServiceClient;
+import ru.sibsutis.appointment.api.client.BotServiceClient;
 import ru.sibsutis.appointment.api.dto.DoctorDto;
 import ru.sibsutis.appointment.api.dto.OwnerDto;
 import ru.sibsutis.appointment.core.exception.NotificationException;
@@ -32,7 +32,7 @@ public class AppointmentScheduler {
     private final RedisTemplate<String, String> redisTemplate;
     private final AppointmentRepository appointmentRepository;
 
-    private final TelegramServiceClient telegramServiceClient;
+    private final BotServiceClient botServiceClient;
     private final ProfileServiceClient profileServiceClient;
     private final ManagementServiceClient managementServiceClient;
 
@@ -66,14 +66,14 @@ public class AppointmentScheduler {
             DoctorDto doctor = managementServiceClient.getDoctorById(app.getDoctorId());
 
             try {
-                ResponseEntity<?> result = telegramServiceClient.sendNotification(
+                ResponseEntity<?> result = botServiceClient.sendNotification(
                         owner.getVkUserId(),
                         "До вашего приёма остался 1 час ⏳" +
                                 "\nВрач: " + doctor.firstName() + " " + doctor.lastName() +
                                 "\nВремя: " + app.getStartTime().format(TIME_FORMATTER));
 
                 if (result.getStatusCode().is2xxSuccessful()) {
-                    log.info("Уведомление успешно отправлено для chatId: {}", owner.getVkUserId());
+                    log.info("Уведомление успешно отправлено для userId: {}", owner.getVkUserId());
                 } else {
                     throw new RestClientException("Ошибка отправки уведомления. Статус: " + result.getStatusCode()
                             + "Тело ответа: " + result.getBody());
@@ -105,7 +105,7 @@ public class AppointmentScheduler {
                 OwnerDto owner = profileServiceClient.getOwnerById(app.getOwnerId());
 
                 if (owner.getVkUserId() != null) {
-                    telegramServiceClient.sendNotification(
+                    botServiceClient.sendNotification(
                             owner.getVkUserId(),
                             "Ваш прием уже начинается!" +
                                     "\nВрач: " + doctor.firstName() + " " + doctor.lastName() +
