@@ -30,11 +30,20 @@ public class Appointment {
     @Column(nullable = false)
     private UUID doctorId;
 
+    @Column
+    private String doctorFullName;
+
     @Column(nullable = false)
     private String ownerId;
 
+    @Column
+    private String ownerFullName;
+
     @Column(nullable = false)
     private String petId;
+
+    @Column
+    private String petFullName;
 
     @Column(nullable = false)
     private LocalDateTime startTime;

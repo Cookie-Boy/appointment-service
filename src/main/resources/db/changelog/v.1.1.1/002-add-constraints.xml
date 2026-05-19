@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.6.xsd">
+
+    <!-- Ограничение для статуса -->
+    <changeSet id="002-add-status-check" author="cool_developer">
+        <sql>
+            ALTER TABLE appointments
+            ADD CONSTRAINT ck_appointments_status
+            CHECK (status IN ('CONFIRMED', 'PENDING', 'CANCELLED'));
+        </sql>
+    </changeSet>
+
+    <!-- Индексы -->
+    <changeSet id="003-add-indexes" author="cool_developer">
+        <createIndex
+                tableName="appointments"
+                indexName="idx_appointments_doctor_id"
+                unique="false">
+            <column name="doctor_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

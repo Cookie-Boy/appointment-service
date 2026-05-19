@@ -29,8 +29,22 @@ public class AppointmentController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping()
+    public ResponseEntity<List<AppointmentResponseDto>> getAllAppointments() {
+        log.info("Fetching all appointments...");
+        List<AppointmentResponseDto> response = appointmentService.getAllAppointments();
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/doctor/{doctorId}")
+    public ResponseEntity<List<AppointmentResponseDto>> getAppointmentsByDoctor(@PathVariable UUID doctorId) {
+        log.info("Got the request. Trying to fetch doctor's appointments...");
+        List<AppointmentResponseDto> response = appointmentService.getDoctorAppointments(doctorId);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/owner/{ownerId}")
-    public ResponseEntity<List<AppointmentResponseDto>> getOwnerAppointments(@PathVariable String ownerId) {
+    public ResponseEntity<List<AppointmentResponseDto>> getAppointmentsByOwner(@PathVariable String ownerId) {
         log.info("Got the request. Trying to fetch owner's appointments...");
         List<AppointmentResponseDto> response = appointmentService.getOwnerAppointments(ownerId);
         return ResponseEntity.ok(response);

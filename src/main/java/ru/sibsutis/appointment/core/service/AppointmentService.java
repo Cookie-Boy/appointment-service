@@ -78,14 +78,21 @@ public class AppointmentService {
         }
 
         try {
+            OwnerDto owner = profileServiceClient.getOwnerById(dto.ownerId());
+            String ownerFullName = owner.getLastName() + owner.getFirstName();
+
+            PetDto pet = profileServiceClient.getPetById(dto.petId());
+            String petFullName = String.format("%s (%s)", pet.getName(), pet.getBreed());
+
+            String doctorFullName = doctor.lastName() + doctor.firstName();
+
             Appointment appointment = appointmentMapper.toEntity(dto);
-            appointment.setDoctorId(doctor.id());
-            appointment.setOwnerId(dto.ownerId());
-            appointment.setPetId(dto.petId());
+            appointment.setDoctorFullName(doctorFullName);
+            appointment.setOwnerFullName(ownerFullName);
+            appointment.setPetFullName(petFullName);
             appointment.setStartTime(startTime);
             appointment.setEndTime(endTime);
             appointment.setStatus(AppointmentStatus.PENDING);
-
             appointment = appointmentRepository.save(appointment);
 
             redisTemplate.opsForHash().put(
@@ -125,8 +132,18 @@ public class AppointmentService {
         return new SuccessResponseDto(200, "Бронь успешно отменена");
     }
 
+    public List<AppointmentResponseDto> getAllAppointments() {
+        List<Appointment> appointments = appointmentRepository.findAll();
+        return appointmentMapper.toDto(appointments);
+    }
+
     public List<AppointmentResponseDto> getOwnerAppointments(String ownerId) {
         List<Appointment> appointments = appointmentRepository.findByOwnerId(ownerId);
+        return appointmentMapper.toDto(appointments);
+    }
+
+    public List<AppointmentResponseDto> getDoctorAppointments(UUID doctorId) {
+        List<Appointment> appointments = appointmentRepository.findByDoctorId(doctorId);
         return appointmentMapper.toDto(appointments);
     }
 
