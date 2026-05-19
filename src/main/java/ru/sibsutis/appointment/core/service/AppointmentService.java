@@ -79,12 +79,12 @@ public class AppointmentService {
 
         try {
             OwnerDto owner = profileServiceClient.getOwnerById(dto.ownerId());
-            String ownerFullName = owner.getLastName() + owner.getFirstName();
+            String ownerFullName = owner.getLastName() + " " + owner.getFirstName();
 
             PetDto pet = profileServiceClient.getPetById(dto.petId());
             String petFullName = String.format("%s (%s)", pet.getName(), pet.getBreed());
 
-            String doctorFullName = doctor.lastName() + doctor.firstName();
+            String doctorFullName = doctor.lastName() + " " + doctor.firstName();
 
             Appointment appointment = appointmentMapper.toEntity(dto);
             appointment.setDoctorFullName(doctorFullName);
