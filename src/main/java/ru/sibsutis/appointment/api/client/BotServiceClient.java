@@ -18,7 +18,7 @@ public class BotServiceClient {
         String token = tokenProvider.getFreshToken();
         log.info("Fresh token for calling vk-bot-service: {}", token);
         return restClient.post()
-                .uri("/notify/{userId}", userId)
+                .uri("/bot/notify/{userId}", userId)
                 .headers(httpHeaders -> httpHeaders.setBearerAuth(token))
                 .body(text)
                 .retrieve()

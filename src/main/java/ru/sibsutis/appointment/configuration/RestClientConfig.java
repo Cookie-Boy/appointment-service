@@ -8,12 +8,12 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class RestClientConfig {
     @Value("${gateway.url}")
-    private String url;
+    private String gatewayUrl;
 
     @Bean
     public RestClient restClient() {
         return RestClient.builder()
-                .baseUrl(url)
+                .baseUrl(gatewayUrl)
                 .defaultHeader("Content-Type", "application/json")
                 .requestInterceptor((request, body, execution) -> execution.execute(request, body))
                 .build();
