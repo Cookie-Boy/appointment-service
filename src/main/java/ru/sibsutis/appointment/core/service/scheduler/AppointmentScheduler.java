@@ -2,6 +2,7 @@ package ru.sibsutis.appointment.core.service.scheduler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,6 +18,7 @@ import ru.sibsutis.appointment.core.model.Appointment;
 import ru.sibsutis.appointment.core.model.AppointmentStatus;
 import ru.sibsutis.appointment.core.repository.AppointmentRepository;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -36,10 +38,14 @@ public class AppointmentScheduler {
     private final ProfileServiceClient profileServiceClient;
     private final ManagementServiceClient managementServiceClient;
 
+    private Clock utcClock() {
+        return Clock.systemUTC();
+    }
+
     @Scheduled(fixedRate = 60_000)
     public void checkUpcomingAppointments() {
         log.info("<checkUpcomingAppointments started>");
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(utcClock());
         checkAndNotify(now.plusHours(1));
         checkAndConfirm(now);
     }
@@ -92,7 +98,7 @@ public class AppointmentScheduler {
     private void checkAndConfirm(LocalDateTime now) {
         log.info("checkAndConfirm started: {}", now);
         List<Appointment> appointments = appointmentRepository
-                .findByStartTimeBetween(now.minusMinutes(15), now.plusMinutes(15));
+                .findByStartTimeBetween(now.minusMinutes(5), now.plusMinutes(5));
         log.info("appointments size: {}", appointments.size());
 
         appointments.forEach(app -> {
