@@ -4,7 +4,6 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import ru.sibsutis.appointment.api.client.ManagementServiceClient;
@@ -14,11 +13,9 @@ import ru.sibsutis.appointment.api.mapper.AppointmentMapper;
 import ru.sibsutis.appointment.core.exception.BookingException;
 import ru.sibsutis.appointment.core.exception.SlotAlreadyBookedException;
 import ru.sibsutis.appointment.core.model.*;
-import ru.sibsutis.appointment.core.repository.*;
+import ru.sibsutis.appointment.core.repository.AppointmentRepository;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -30,17 +27,15 @@ public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
     private final AppointmentMapper appointmentMapper;
-
     private final ProfileServiceClient profileServiceClient;
     private final ManagementServiceClient managementServiceClient;
-
     private final StringRedisTemplate redisTemplate;
 
     @Transactional
     public AppointmentResponseDto bookAppointment(AppointmentRequestDto dto) {
         DoctorDto doctor;
-        LocalDateTime startTime;
-        LocalDateTime endTime;
+        OffsetDateTime startTime;
+        OffsetDateTime endTime;
 
         if (dto.doctorId() == null) {
             log.info("Doctor ID is null -> try to find optimal doctor.");
@@ -49,9 +44,19 @@ public class AppointmentService {
             doctor = managementServiceClient.getDoctorById(dto.doctorId());
         }
 
+        // Определяем часовой пояс пользователя из метаданных
+        ZoneId userZone = ZoneId.systemDefault();
+        if (dto.metadata() != null && dto.metadata().get("originalTimezone") != null) {
+            try {
+                userZone = ZoneId.of(dto.metadata().get("originalTimezone").toString());
+            } catch (Exception e) {
+                log.warn("Invalid timezone in metadata, using system default: {}", e.getMessage());
+            }
+        }
+
         if (dto.startTime() == null) {
             log.info("Start time is null -> try to find nearest available time.");
-            startTime = findNearestAvailableSlot(doctor);
+            startTime = findNearestAvailableSlot(doctor, userZone);
             endTime = startTime.plusMinutes(30);
         } else {
             startTime = dto.startTime();
@@ -61,17 +66,9 @@ public class AppointmentService {
         LocalDate date = startTime.toLocalDate();
         String preferredTime = formatTimeSlot(startTime, endTime);
 
-        String slotKey = "slots:doctor:%s:date:%s".formatted(
-                doctor.id(),
-                date
-        );
+        String slotKey = "slots:doctor:%s:date:%s".formatted(doctor.id(), date);
 
-        Boolean isSlotFree = redisTemplate.opsForHash().putIfAbsent(
-                slotKey,
-                preferredTime,
-                "locked"
-        );
-
+        Boolean isSlotFree = redisTemplate.opsForHash().putIfAbsent(slotKey, preferredTime, "locked");
         if (Boolean.FALSE.equals(isSlotFree)) {
             redisTemplate.opsForHash().delete(slotKey, preferredTime);
             throw new SlotAlreadyBookedException("На это время уже забронировано!");
@@ -95,11 +92,7 @@ public class AppointmentService {
             appointment.setStatus(AppointmentStatus.PENDING);
             appointment = appointmentRepository.save(appointment);
 
-            redisTemplate.opsForHash().put(
-                    slotKey,
-                    preferredTime,
-                    appointment.getId().toString()
-            );
+            redisTemplate.opsForHash().put(slotKey, preferredTime, appointment.getId().toString());
 
             String loadKey = "doctor_load:%s".formatted(doctor.id());
             redisTemplate.opsForZSet().incrementScore(loadKey, "total", 1);
@@ -172,7 +165,8 @@ public class AppointmentService {
             LocalTime currentSlot = doctor.startWorkingDay();
             LocalTime endOfDay = doctor.endWorkingDay();
 
-            while (!currentSlot.isAfter(endOfDay.minusMinutes(30))) {
+            // Исправлено условие: пока текущий слот не достиг конца дня с учётом 30-минутных интервалов
+            while (currentSlot.isBefore(endOfDay.minusMinutes(30))) {
                 String slotTime = formatTimeSlot(currentSlot, currentSlot.plusMinutes(30));
 
                 if (!bookedTimeSlots.contains(slotTime)) {
@@ -181,7 +175,6 @@ public class AppointmentService {
                             .endTime(currentSlot.plusMinutes(30).toString())
                             .build());
                 }
-
                 currentSlot = currentSlot.plusMinutes(30);
             }
         }
@@ -203,36 +196,55 @@ public class AppointmentService {
                 .orElseThrow(() -> new EntityNotFoundException("Нет доступных врачей"));
     }
 
-    private LocalDateTime findNearestAvailableSlot(DoctorDto doctor) {
-        LocalDateTime now = LocalDateTime.now();
+    private OffsetDateTime findNearestAvailableSlot(DoctorDto doctor, ZoneId userZone) {
+        // Текущий момент в зоне пользователя
+        ZonedDateTime nowInUserZone = ZonedDateTime.now(userZone);
+        LocalDate today = nowInUserZone.toLocalDate();
+
         for (int i = 0; i < 14; i++) {
-            LocalDateTime date = adjustDateTime(now.plusDays(i), doctor, i == 0);
+            LocalDate candidateDate = today.plusDays(i);
 
-            String slotKey = "slots:doctor:" + doctor.id() + ":date:" + date.toLocalDate();
-            LocalTime tempTime = date.toLocalTime();
+            LocalDateTime startOfDayLocal = candidateDate.atTime(doctor.startWorkingDay());
+            ZonedDateTime startOfWork = startOfDayLocal.atZone(userZone);
 
-            while (!tempTime.isBefore(doctor.endWorkingDay())) {
-                String slotTime = formatTimeSlot(tempTime, tempTime.plusMinutes(30));
+            ZonedDateTime startSearch;
+            if (i == 0) {
+                LocalTime rounded = nowInUserZone.toLocalTime();
+                int minute = rounded.getMinute();
+                if (minute <= 30) {
+                    rounded = rounded.withMinute(30).withSecond(0).withNano(0);
+                } else {
+                    rounded = rounded.withHour(rounded.getHour() + 1).withMinute(0).withSecond(0).withNano(0);
+                }
+                startSearch = nowInUserZone.with(rounded);
+                if (startSearch.isBefore(startOfWork)) {
+                    startSearch = startOfWork;
+                }
+            } else {
+                startSearch = startOfWork;
+            }
+
+            ZonedDateTime endOfWork = candidateDate.atTime(doctor.endWorkingDay()).atZone(userZone);
+            ZonedDateTime current = startSearch;
+
+            String slotKey = "slots:doctor:" + doctor.id() + ":date:" + candidateDate;
+            while (current.isBefore(endOfWork)) {
+                LocalTime startTime = current.toLocalTime();
+                LocalTime endTime = startTime.plusMinutes(30);
+                String slotTime = formatTimeSlot(startTime, endTime);
                 String status = (String) redisTemplate.opsForHash().get(slotKey, slotTime);
 
                 if (status == null) {
-                    return tempTime.atDate(date.toLocalDate());
+                    return current.toOffsetDateTime();
                 }
-                tempTime = tempTime.plusMinutes(30);
+                current = current.plusMinutes(30);
             }
         }
-
         throw new EntityNotFoundException("Нет свободных слотов на ближайшие 2 недели.");
     }
 
-     private LocalDateTime adjustDateTime(LocalDateTime date, DoctorDto doctor, boolean isCurrentDay) {
-        if (isCurrentDay) {
-            return date.withMinute(date.getMinute() <= 30 ? 30 : 0)
-                    .withSecond(0)
-                    .withNano(0)
-                    .plusHours(date.getMinute() > 30 ? 1 : 0);
-        }
-        return date.with(doctor.startWorkingDay());
+    private String formatTimeSlot(OffsetDateTime start, OffsetDateTime end) {
+        return formatTimeSlot(start.toLocalTime(), end.toLocalTime());
     }
 
     private String formatTimeSlot(LocalDateTime start, LocalDateTime end) {
@@ -241,9 +253,6 @@ public class AppointmentService {
 
     private String formatTimeSlot(LocalTime start, LocalTime end) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
-        return "%s-%s".formatted(
-                start.format(formatter),
-                end.format(formatter)
-        );
+        return "%s-%s".formatted(start.format(formatter), end.format(formatter));
     }
 }

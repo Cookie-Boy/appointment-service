@@ -1,6 +1,6 @@
 package ru.sibsutis.appointment.api.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -9,7 +9,7 @@ public record AppointmentRequestDto(
         String ownerId,
         String petId,
         String tgUserName,
-        LocalDateTime startTime,
-        LocalDateTime endTime,
+        OffsetDateTime startTime,
+        OffsetDateTime endTime,
         Map<String, Object> metadata
 ) {}

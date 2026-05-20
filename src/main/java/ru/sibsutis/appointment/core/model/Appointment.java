@@ -10,6 +10,7 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -46,10 +47,10 @@ public class Appointment {
     private String petFullName;
 
     @Column(nullable = false)
-    private LocalDateTime startTime;
+    private OffsetDateTime startTime;
 
     @Column(nullable = false)
-    private LocalDateTime endTime;
+    private OffsetDateTime endTime;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

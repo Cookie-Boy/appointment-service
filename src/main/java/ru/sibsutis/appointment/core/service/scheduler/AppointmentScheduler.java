@@ -2,15 +2,14 @@ package ru.sibsutis.appointment.core.service.scheduler;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
+import ru.sibsutis.appointment.api.client.BotServiceClient;
 import ru.sibsutis.appointment.api.client.ManagementServiceClient;
 import ru.sibsutis.appointment.api.client.ProfileServiceClient;
-import ru.sibsutis.appointment.api.client.BotServiceClient;
 import ru.sibsutis.appointment.api.dto.DoctorDto;
 import ru.sibsutis.appointment.api.dto.OwnerDto;
 import ru.sibsutis.appointment.core.exception.NotificationException;
@@ -19,7 +18,7 @@ import ru.sibsutis.appointment.core.model.AppointmentStatus;
 import ru.sibsutis.appointment.core.repository.AppointmentRepository;
 
 import java.time.Clock;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -37,27 +36,26 @@ public class AppointmentScheduler {
     private final BotServiceClient botServiceClient;
     private final ProfileServiceClient profileServiceClient;
     private final ManagementServiceClient managementServiceClient;
-
-    private Clock utcClock() {
-        return Clock.systemUTC();
-    }
+    private final Clock utcClock;
 
     @Scheduled(fixedRate = 60_000)
     public void checkUpcomingAppointments() {
         log.info("<checkUpcomingAppointments started>");
-        LocalDateTime now = LocalDateTime.now(utcClock());
+        OffsetDateTime now = OffsetDateTime.now(utcClock);
         checkAndNotify(now.plusHours(1));
         checkAndConfirm(now);
     }
 
-    private void checkAndNotify(LocalDateTime targetTime) {
+    private void checkAndNotify(OffsetDateTime targetTime) {
         log.info("checkAndNotify started: {}", targetTime);
         List<Appointment> appointments = appointmentRepository
                 .findByStartTimeBetween(targetTime.minusMinutes(3), targetTime.plusMinutes(3));
 
         for (Appointment app : appointments) {
             OwnerDto owner = profileServiceClient.getOwnerById(app.getOwnerId());
-            if (app.getStatus() == AppointmentStatus.CONFIRMED || owner.getVkUserId() == null) return;
+            if (app.getStatus() == AppointmentStatus.CONFIRMED || owner.getVkUserId() == null) {
+                continue;
+            }
 
             String lockKey = "hourly_notification:" + app.getId();
 
@@ -82,7 +80,7 @@ public class AppointmentScheduler {
                     log.info("Уведомление успешно отправлено для userId: {}", owner.getVkUserId());
                 } else {
                     throw new RestClientException("Ошибка отправки уведомления. Статус: " + result.getStatusCode()
-                            + "Тело ответа: " + result.getBody());
+                            + " Тело ответа: " + result.getBody());
                 }
 
             } catch (RestClientException e) {
@@ -95,10 +93,10 @@ public class AppointmentScheduler {
         }
     }
 
-    private void checkAndConfirm(LocalDateTime now) {
+    private void checkAndConfirm(OffsetDateTime now) {
         log.info("checkAndConfirm started: {}", now);
         List<Appointment> appointments = appointmentRepository
-                .findByStartTimeBetween(now.minusMinutes(20), now.plusMinutes(20));
+                .findByStartTimeBetween(now.minusMinutes(5), now.plusMinutes(5));
         log.info("appointments size: {}", appointments.size());
 
         appointments.forEach(app -> {
@@ -141,7 +139,7 @@ public class AppointmentScheduler {
 
     @Scheduled(cron = "0 0 3 * * ?") // Ежедневно в 3:00
     public void cleanupOldAppointments() {
-        LocalDateTime weekAgo = LocalDateTime.now().minusDays(7);
+        OffsetDateTime weekAgo = OffsetDateTime.now(utcClock).minusDays(7);
         List<Appointment> oldAppointments = appointmentRepository
                 .findByEndTimeBeforeAndStatus(weekAgo, AppointmentStatus.CONFIRMED);
 

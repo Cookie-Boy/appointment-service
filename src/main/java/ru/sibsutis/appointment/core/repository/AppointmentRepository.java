@@ -8,6 +8,7 @@ import ru.sibsutis.appointment.core.model.Appointment;
 import ru.sibsutis.appointment.core.model.AppointmentStatus;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -17,9 +18,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     @Query("SELECT a FROM Appointment a WHERE a.id = :id")
     Optional<Appointment> findById(@Param("id") UUID id);
 
-    Optional<Appointment> findByStartTime(LocalDateTime startTime);
     List<Appointment> findByOwnerId(String ownerId);
     List<Appointment> findByDoctorId(UUID doctorId);
-    List<Appointment> findByStartTimeBetween(LocalDateTime start, LocalDateTime end);
-    List<Appointment> findByEndTimeBeforeAndStatus(LocalDateTime endTime, AppointmentStatus status);
+    List<Appointment> findByStartTimeBetween(OffsetDateTime start, OffsetDateTime end);
+    List<Appointment> findByEndTimeBeforeAndStatus(OffsetDateTime endTime, AppointmentStatus status);
 }
