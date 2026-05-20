@@ -74,7 +74,7 @@ public class AppointmentScheduler {
                         owner.getVkUserId(),
                         "До вашего приёма остался 1 час ⏳" +
                                 "\nВрач: " + doctor.firstName() + " " + doctor.lastName() +
-                                "\nВремя: " + app.getStartTime().format(TIME_FORMATTER));
+                                "\nВремя: " + targetTime.format(TIME_FORMATTER));
 
                 if (result.getStatusCode().is2xxSuccessful()) {
                     log.info("Уведомление успешно отправлено для userId: {}", owner.getVkUserId());
