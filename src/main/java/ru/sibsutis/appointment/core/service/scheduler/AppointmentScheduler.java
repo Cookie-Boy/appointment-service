@@ -98,7 +98,7 @@ public class AppointmentScheduler {
     private void checkAndConfirm(LocalDateTime now) {
         log.info("checkAndConfirm started: {}", now);
         List<Appointment> appointments = appointmentRepository
-                .findByStartTimeBetween(now.minusMinutes(5), now.plusMinutes(5));
+                .findByStartTimeBetween(now.minusMinutes(20), now.plusMinutes(20));
         log.info("appointments size: {}", appointments.size());
 
         appointments.forEach(app -> {
