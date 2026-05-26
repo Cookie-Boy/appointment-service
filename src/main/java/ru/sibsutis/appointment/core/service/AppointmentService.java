@@ -124,41 +124,26 @@ public class AppointmentService {
         return appointmentMapper.toDto(appointments);
     }
 
-    public List<TimeSlotDto> getAvailableSlots(String doctorId, LocalDate date, String timezone) {
+    public List<TimeSlotDto> getAvailableSlots(String doctorId, LocalDate date) {
         List<DoctorDto> doctors = (doctorId != null && !doctorId.isEmpty())
                 ? List.of(externalGateway.getDoctorById(UUID.fromString(doctorId)))
                 : externalGateway.getAllDoctors();
 
         Set<TimeSlotDto> availableSlots = new HashSet<>();
-
-        ZoneId userZone = extractUserZone(timezone);
-        ZonedDateTime userDateStart = date.atStartOfDay(userZone);
-
         for (DoctorDto doctor : doctors) {
             Set<String> booked = slotManager.getBookedSlots(doctor.id(), date);
-
-            ZonedDateTime doctorWorkStart = userDateStart
-                    .with(doctor.startWorkingDay())
-                    .withZoneSameInstant(userZone);
-
-            ZonedDateTime doctorWorkEnd = userDateStart
-                    .with(doctor.endWorkingDay())
-                    .withZoneSameInstant(userZone);
-
-            OffsetDateTime current = doctorWorkStart.toOffsetDateTime();
-            OffsetDateTime end = doctorWorkEnd.toOffsetDateTime();
+            LocalTime current = doctor.startWorkingDay();
+            LocalTime end = doctor.endWorkingDay();
 
             while (current.isBefore(end.minusMinutes(30))) {
-                OffsetDateTime slotEnd = current.plusMinutes(30);
-                String slot = formatTimeSlot(current, slotEnd);
-
+                String slot = formatTimeSlot(current, current.plusMinutes(30));
                 if (!booked.contains(slot)) {
                     availableSlots.add(TimeSlotDto.builder()
-                            .startTime(current.toLocalTime().toString())
-                            .endTime(slotEnd.toLocalTime().toString())
+                            .startTime(current.toString())
+                            .endTime(current.plusMinutes(30).toString())
                             .build());
                 }
-                current = slotEnd;
+                current = current.plusMinutes(30);
             }
         }
         return availableSlots.stream()
@@ -172,17 +157,6 @@ public class AppointmentService {
                 return ZoneId.of(dto.metadata().get("originalTimezone").toString());
             } catch (Exception e) {
                 log.warn("Invalid timezone in metadata, using system default");
-            }
-        }
-        return ZoneId.systemDefault();
-    }
-
-    private ZoneId extractUserZone(String timezone) {
-        if (timezone != null && !timezone.trim().isEmpty()) {
-            try {
-                return ZoneId.of(timezone);
-            } catch (DateTimeException e) {
-                log.warn("Invalid timezone: {}, using system default", timezone);
             }
         }
         return ZoneId.systemDefault();

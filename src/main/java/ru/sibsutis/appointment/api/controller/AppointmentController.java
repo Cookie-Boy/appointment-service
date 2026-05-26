@@ -58,8 +58,7 @@ public class AppointmentController {
     @GetMapping("/slots")
     public ResponseEntity<List<TimeSlotDto>> getAvailableSlots(
             @RequestParam(required = false) String doctorId,
-            @RequestParam String date,
-            @RequestHeader(value = "X-Timezone") String timezone
+            @RequestParam String date
     ) {
         log.info("Got the request");
         if (date == null || date.trim().isEmpty()) {
@@ -73,7 +72,7 @@ public class AppointmentController {
             throw new IllegalArgumentException("Invalid date format. Expected yyyy-MM-dd");
         }
 
-        List<TimeSlotDto> availableSlots = appointmentService.getAvailableSlots(doctorId, requestedDate, timezone);
+        List<TimeSlotDto> availableSlots = appointmentService.getAvailableSlots(doctorId, requestedDate);
         return ResponseEntity.ok(availableSlots);
     }
 }
