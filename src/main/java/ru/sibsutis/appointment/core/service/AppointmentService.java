@@ -31,6 +31,10 @@ public class AppointmentService {
 
     @Transactional
     public AppointmentResponseDto bookAppointment(AppointmentRequestDto dto) {
+        if (dto.clinicId() == null) {
+            throw new NullPointerException("Отсутствует ID клиники!");
+        }
+
         ZoneId userZone = extractUserZone(dto);
 
         DoctorDto doctor;
@@ -69,11 +73,14 @@ public class AppointmentService {
         }
 
         try {
+            ClinicDto clinic = externalGateway.getClinicById(dto.clinicId());
             OwnerDto owner = externalGateway.getOwnerById(dto.ownerId());
             PetDto pet = externalGateway.getPetById(dto.petId());
 
             Appointment appointment = appointmentMapper.toEntity(dto);
             appointment.setDoctorId(doctor.id());
+            appointment.setClinicId(clinic.id());
+            appointment.setClinicName(clinic.name());
             appointment.setDoctorFullName(doctor.lastName() + " " + doctor.firstName());
             appointment.setOwnerFullName(owner.getLastName() + " " + owner.getFirstName());
             appointment.setPetFullName(pet.getName() + " (" + pet.getBreed() + ")");

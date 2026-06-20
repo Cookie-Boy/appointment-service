@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import ru.sibsutis.appointment.api.dto.ClinicDto;
 import ru.sibsutis.appointment.api.dto.DoctorDto;
 
 import java.util.List;
@@ -31,6 +32,25 @@ public class ManagementServiceClient {
         String token = tokenProvider.getFreshToken();
         return restClient.get()
                 .uri("/api/management/doctors")
+                .headers(httpHeaders -> httpHeaders.setBearerAuth(token))
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+    }
+
+    public ClinicDto getClinicById(UUID clinicId) {
+        String token = tokenProvider.getFreshToken();
+        log.info("Trying to fetch clinic from Management-service...");
+        return restClient.get()
+                .uri("/api/management/clinics/{clinicId}", clinicId)
+                .headers(httpHeaders -> httpHeaders.setBearerAuth(token))
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+    }
+
+    public List<ClinicDto> getAllClinics() {
+        String token = tokenProvider.getFreshToken();
+        return restClient.get()
+                .uri("/api/management/clinics")
                 .headers(httpHeaders -> httpHeaders.setBearerAuth(token))
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {});

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.32.xsd">
+
+    <!-- Добавление колонки clinic_id в таблицу appointments -->
+    <changeSet id="010-add-clinic-id-to-appointments" author="cool_developer">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="appointments" columnName="clinic_id"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="appointments">
+            <column name="clinic_id" type="UUID"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

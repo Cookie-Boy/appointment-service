@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import ru.sibsutis.appointment.api.dto.ClinicDto;
 import ru.sibsutis.appointment.api.dto.DoctorDto;
 import ru.sibsutis.appointment.api.dto.OwnerDto;
 import ru.sibsutis.appointment.api.dto.PetDto;
@@ -30,6 +31,14 @@ public class ExternalGateway {
 
     public List<DoctorDto> getAllDoctors() {
         return managementServiceClient.getAllDoctors();
+    }
+
+    public ClinicDto getClinicById(UUID doctorId) {
+        return managementServiceClient.getClinicById(doctorId);
+    }
+
+    public List<ClinicDto> getAllClinics() {
+        return managementServiceClient.getAllClinics();
     }
 
     public OwnerDto getOwnerById(String ownerId) {

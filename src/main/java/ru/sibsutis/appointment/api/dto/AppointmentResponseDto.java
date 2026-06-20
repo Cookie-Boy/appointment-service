@@ -7,6 +7,8 @@ import java.util.UUID;
 
 public record AppointmentResponseDto(
         UUID id,
+        UUID clinicId,
+        String clinicName,
         UUID doctorId,
         String doctorFullName,
         String ownerId,

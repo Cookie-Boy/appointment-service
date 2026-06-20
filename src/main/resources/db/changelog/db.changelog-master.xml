@@ -7,5 +7,6 @@
 
     <include file="db/changelog/create-schema.sql" relativeToChangelogFile="false"/>
     <include file="v.1.1.1/changelog.xml" relativeToChangelogFile="true"/>
+    <include file="v.1.1.2/add-clinics.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

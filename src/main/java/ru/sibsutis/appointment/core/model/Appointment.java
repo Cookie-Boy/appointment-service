@@ -29,6 +29,12 @@ public class Appointment {
     private UUID id;
 
     @Column(nullable = false)
+    private UUID clinicId;
+
+    @Column
+    private String clinicName;
+
+    @Column(nullable = false)
     private UUID doctorId;
 
     @Column

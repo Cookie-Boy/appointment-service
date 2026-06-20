@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public record AppointmentRequestDto(
+        UUID clinicId,
         UUID doctorId,
         String ownerId,
         String petId,
