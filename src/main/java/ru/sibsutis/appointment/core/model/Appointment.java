@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Entity
-@Table(name = "appointments")
+@Table(name = "appointments", schema = "appointment")
 @Getter
 @Setter
 @NoArgsConstructor
