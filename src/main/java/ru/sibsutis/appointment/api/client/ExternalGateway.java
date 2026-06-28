@@ -33,6 +33,10 @@ public class ExternalGateway {
         return managementServiceClient.getAllDoctors();
     }
 
+    public List<DoctorDto> getDoctorsByClinic(UUID clinicId) {
+        return managementServiceClient.getDoctorsByClinic(clinicId);
+    }
+
     public ClinicDto getClinicById(UUID doctorId) {
         return managementServiceClient.getClinicById(doctorId);
     }

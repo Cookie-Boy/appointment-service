@@ -44,14 +44,14 @@ public class AppointmentService {
         if (dto.doctorId() == null) {
             log.info("Doctor ID not provided, searching for best doctor and time.");
             if (dto.startTime() == null) {
-                SlotSearchResult result = findAnyAvailableSlot(userZone);
+                SlotSearchResult result = findAnyAvailableSlot(dto.clinicId(), userZone);
                 doctor = result.doctor;
                 startTime = result.startTime;
                 endTime = startTime.plusMinutes(30);
             } else {
                 startTime = dto.startTime();
                 endTime = dto.endTime();
-                doctor = findBestDoctorForSlot(startTime, userZone);
+                doctor = findBestDoctorForSlot(dto.clinicId(), startTime, userZone);
             }
         } else {
             doctor = externalGateway.getDoctorById(dto.doctorId());
@@ -131,10 +131,10 @@ public class AppointmentService {
         return appointmentMapper.toDto(appointments);
     }
 
-    public List<TimeSlotDto> getAvailableSlots(String doctorId, LocalDate date) {
+    public List<TimeSlotDto> getAvailableSlots(UUID clinicId, String doctorId, LocalDate date) {
         List<DoctorDto> doctors = (doctorId != null && !doctorId.isEmpty())
                 ? List.of(externalGateway.getDoctorById(UUID.fromString(doctorId)))
-                : externalGateway.getAllDoctors();
+                : externalGateway.getDoctorsByClinic(clinicId);
 
         Set<TimeSlotDto> availableSlots = new HashSet<>();
         for (DoctorDto doctor : doctors) {
@@ -169,11 +169,11 @@ public class AppointmentService {
         return ZoneId.systemDefault();
     }
 
-    private DoctorDto findBestDoctorForSlot(OffsetDateTime desiredStartTime, ZoneId userZone) {
+    private DoctorDto findBestDoctorForSlot(UUID clinicId, OffsetDateTime desiredStartTime, ZoneId userZone) {
         LocalDate targetDate = desiredStartTime.toLocalDate();
         String timeSlot = formatTimeSlot(desiredStartTime, desiredStartTime.plusMinutes(30));
 
-        List<DoctorDto> doctors = externalGateway.getAllDoctors();
+        List<DoctorDto> doctors = externalGateway.getDoctorsByClinic(clinicId);
         DoctorDto bestDoctor = null;
         long minLoad = Long.MAX_VALUE;
 
@@ -199,9 +199,9 @@ public class AppointmentService {
         return bestDoctor;
     }
 
-    private SlotSearchResult findAnyAvailableSlot(ZoneId userZone) {
+    private SlotSearchResult findAnyAvailableSlot(UUID clinicId, ZoneId userZone) {
         ZonedDateTime now = ZonedDateTime.now(userZone);
-        List<DoctorDto> doctors = externalGateway.getAllDoctors();
+        List<DoctorDto> doctors = externalGateway.getDoctorsByClinic(clinicId);
 
         for (int i = 0; i < 14; i++) {
             LocalDate candidateDate = now.toLocalDate().plusDays(i);

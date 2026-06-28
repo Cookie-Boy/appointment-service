@@ -37,6 +37,15 @@ public class ManagementServiceClient {
                 .body(new ParameterizedTypeReference<>() {});
     }
 
+    public List<DoctorDto> getDoctorsByClinic(UUID clinicId) {
+        String token = tokenProvider.getFreshToken();
+        return restClient.get()
+                .uri("/api/management/doctors/clinic/{clinicId}", clinicId.toString())
+                .headers(httpHeaders -> httpHeaders.setBearerAuth(token))
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+    }
+
     public ClinicDto getClinicById(UUID clinicId) {
         String token = tokenProvider.getFreshToken();
         log.info("Trying to fetch clinic from Management-service...");
