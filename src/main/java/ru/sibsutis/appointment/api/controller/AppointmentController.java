@@ -72,7 +72,7 @@ public class AppointmentController {
             throw new IllegalArgumentException("Invalid date format. Expected yyyy-MM-dd");
         }
 
-        List<TimeSlotDto> availableSlots = appointmentService.getAvailableSlots(doctorId, requestedDate);
+        List<TimeSlotDto> availableSlots = appointmentService.getAvailableSlots(null, doctorId, requestedDate);
         return ResponseEntity.ok(availableSlots);
     }
 }

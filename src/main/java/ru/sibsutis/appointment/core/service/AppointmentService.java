@@ -132,9 +132,14 @@ public class AppointmentService {
     }
 
     public List<TimeSlotDto> getAvailableSlots(UUID clinicId, String doctorId, LocalDate date) {
-        List<DoctorDto> doctors = (doctorId != null && !doctorId.isEmpty())
-                ? List.of(externalGateway.getDoctorById(UUID.fromString(doctorId)))
-                : externalGateway.getDoctorsByClinic(clinicId);
+        List<DoctorDto> doctors;
+        if (doctorId != null && !doctorId.isEmpty()) {
+            doctors = List.of(externalGateway.getDoctorById(UUID.fromString(doctorId)));
+        } else if (clinicId != null) {
+            doctors = externalGateway.getDoctorsByClinic(clinicId);
+        } else {
+            doctors = externalGateway.getAllDoctors();
+        }
 
         Set<TimeSlotDto> availableSlots = new HashSet<>();
         for (DoctorDto doctor : doctors) {
