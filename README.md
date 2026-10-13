@@ -371,31 +371,6 @@ sequenceDiagram
 | `KEYCLOAK_CLIENT_SECRET` | Секрет клиента `appointment-service` | — |
 | `GATEWAY_HOST` / `GATEWAY_PORT` | API Gateway | `localhost` / `8888` |
 
-### `application.properties` (фрагмент)
-
-```properties
-spring.application.name=appointment
-server.port=8081
-
-spring.jpa.properties.hibernate.jdbc.time_zone=UTC
-spring.jpa.hibernate.default_schema=appointment
-
-spring.datasource.url=jdbc:postgresql://${DB_HOST}:${DB_PORT}/vet-clinic
-spring.datasource.username=${DB_USERNAME}
-spring.datasource.password=${DB_PASSWORD}
-
-spring.liquibase.change-log=classpath:db/changelog/db.changelog-master.xml
-spring.liquibase.default-schema=appointment
-
-spring.redis.host=${REDIS_HOST}
-spring.redis.port=${REDIS_PORT}
-
-spring.security.oauth2.resourceserver.jwt.issuer-uri=${KEYCLOAK_ISSUER_URI}
-spring.security.oauth2.client.registration.appointment.client-id=appointment-service
-spring.security.oauth2.client.registration.appointment.client-secret=${KEYCLOAK_CLIENT_SECRET}
-spring.security.oauth2.client.registration.appointment.authorization-grant-type=client_credentials
-```
-
 ---
 
 ## 🚀 Запуск
